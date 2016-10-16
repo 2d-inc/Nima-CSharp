@@ -5,14 +5,6 @@ using System.Collections.Generic;
 
 namespace Nima
 {
-	public enum NodeTypes
-	{
-		ActorNode = 0,
-		ActorBone = 1,
-		ActorRootBone = 2,
-		ActorImage = 3
-	};
-
 	public class Actor
 	{
 		protected ActorNode m_Root;
@@ -98,19 +90,113 @@ namespace Nima
 			return null;
 		}
 
-		public static Actor LoadFrom(BinaryReader reader)
+		private void ReadNodesBlock(BlockReader block)
 		{
+			int nodeCount = block.ReadUInt16();
+			m_Nodes = new ActorNode[nodeCount+1];
+			m_Nodes[0] = m_Root;
+
+			// Guaranteed from the exporter to be in index order.
+			BlockReader nodeBlock = null;
+
+			int nodeIndex = 1;
+			while((nodeBlock=block.ReadNextBlock()) != null)
+			{
+				ActorNode node = null;
+				switch(nodeBlock.BlockType)
+				{
+					case BlockTypes.ActorNode:
+						node = ActorNode.Read(this, nodeBlock);
+						break;
+
+					case BlockTypes.ActorBone:
+						node = ActorBone.Read(this, nodeBlock);
+						break;
+
+					case BlockTypes.ActorRootBone:
+						node = ActorRootBone.Read(this, nodeBlock);
+						break;
+
+					case BlockTypes.ActorImage:
+						m_ImageNodeCount++;
+						node = ActorImage.Read(this, nodeBlock);
+						if((node as ActorImage).TextureIndex > m_MaxTextureIndex)
+						{
+							m_MaxTextureIndex = (node as ActorImage).TextureIndex;
+						}
+						break;
+
+					case BlockTypes.ActorIKTarget:
+						//node = ActorIKTarget.Read(actor, nodeBlock);
+						break;
+				}
+
+				m_Nodes[nodeIndex] = node;
+				if(node != null)
+				{
+					node.Idx = (ushort)(nodeIndex);
+				}
+				nodeIndex++;
+			}
+
+			m_ImageNodes = new ActorImage[m_ImageNodeCount];
+
+			// Resolve nodes.
+			int imgIdx = 0;
+			ActorNode[] nodes = m_Nodes;
+			for(int i = 1; i <= nodeCount; i++)
+			{
+				ActorNode n = nodes[i];
+				// Nodes can be null if we read from a file version that contained nodes that we don't interpret in this runtime.
+				if(n != null)
+				{
+					n.ResolveNodeIndices(nodes);
+				}
+
+				ActorImage ain = n as ActorImage;
+				if(ain != null)
+				{
+					m_ImageNodes[imgIdx++] = ain;
+				}
+			}
+		}
+
+		private void ReadAnimationsBlock(BlockReader block)
+		{
+			// Read animations.
+			int animationCount = block.ReadUInt16();
+			m_Animations = new Nima.Animation.ActorAnimation[animationCount];
+			BlockReader animationBlock = null;
+			int animationIndex = 0;
+			while((animationBlock=block.ReadNextBlock()) != null)
+			{
+				switch(animationBlock.BlockType)
+				{
+					case BlockTypes.Animation:
+						Nima.Animation.ActorAnimation anim = Nima.Animation.ActorAnimation.Read(animationBlock, m_Nodes);
+						m_Animations[animationIndex++] = anim;
+						//ReadAnimationBlock(actor, block);
+						break;
+				}
+			};
+		}
+
+
+		public static Actor LoadFrom(Stream stream)
+		{
+			BlockReader reader = new BlockReader(stream);
+
 			byte N = reader.ReadByte();
 			byte I = reader.ReadByte();
 			byte M = reader.ReadByte();
 			byte A = reader.ReadByte();
-			float version = reader.ReadSingle();
+			uint version = reader.ReadUInt32();
 
 			if(N != 78 || I != 73 || M != 77 || A != 65)
 			{
 				return null;
 			}
-			if(version != 1.0)
+			if(version != 11)
 			{
 				return null;
 			}
@@ -123,68 +209,18 @@ namespace Nima
 			actor.m_MaxTextureIndex = 0;
 			actor.m_Root = new ActorNode(actor);
 
-			int nodeCount = reader.ReadUInt16();
-			actor.m_Nodes = new ActorNode[nodeCount+1];
-			actor.m_Nodes[0] = actor.m_Root;
-			
-			for(int i = 0; i < nodeCount; i++)
+			BlockReader block = null;
+			while((block=reader.ReadNextBlock()) != null)
 			{
-				int nodeType = reader.ReadByte();
-				NodeTypes type = (NodeTypes)nodeType;
-				ActorNode node = null;
-
-				switch(type)
+				switch(block.BlockType)
 				{
-					case NodeTypes.ActorNode:
-						node = ActorNode.Read(actor, reader);
+					case BlockTypes.Nodes:
+						actor.ReadNodesBlock(block);
 						break;
-
-					case NodeTypes.ActorBone:
-						node = ActorBone.Read(actor, reader);
-						break;
-
-					case NodeTypes.ActorRootBone:
-						node = ActorRootBone.Read(actor, reader);
-						break;
-
-					case NodeTypes.ActorImage:
-						actor.m_ImageNodeCount++;
-						node = ActorImage.Read(actor, reader);
-						if((node as ActorImage).TextureIndex > actor.m_MaxTextureIndex)
-						{
-							actor.m_MaxTextureIndex = (node as ActorImage).TextureIndex;
-						}
+					case BlockTypes.Animations:
+						actor.ReadAnimationsBlock(block);
 						break;
 				}
-
-				actor.m_Nodes[i+1] = node;
-				node.Idx = (ushort)(i+1);
-			}
-
-			actor.m_ImageNodes = new ActorImage[actor.m_ImageNodeCount];
-
-			// Resolve nodes.
-			int imgIdx = 0;
-			ActorNode[] nodes = actor.m_Nodes;
-			for(int i = 1; i <= nodeCount; i++)
-			{
-				ActorNode n = nodes[i];
-				n.ResolveNodeIndices(nodes);
-
-				ActorImage ain = n as ActorImage;
-				if(ain != null)
-				{
-					actor.m_ImageNodes[imgIdx++] = ain;
-				}
-			}
-
-			// Read animations.
-			int animationCount = reader.ReadUInt16();
-			actor.m_Animations = new Nima.Animation.ActorAnimation[animationCount];
-			for(int i = 0; i < animationCount; i++)
-			{
-				Nima.Animation.ActorAnimation anim = Nima.Animation.ActorAnimation.Read(reader, nodes);
-				actor.m_Animations[i] = anim;
 			}
 
 			return actor;
@@ -196,10 +232,7 @@ namespace Nima
 			byte[] buffer = new byte[stringLength];
 			reader.Read(buffer, 0, (int)stringLength);
 
-			string encoded = System.Text.Encoding.UTF8.GetString(buffer);
-			byte[] data = Convert.FromBase64String(encoded);
-			string decodedString = System.Text.Encoding.UTF8.GetString(data);
-			return decodedString;
+			return System.Text.Encoding.UTF8.GetString(buffer);
 		}
 
 		public static void ReadFloat32Array(BinaryReader reader, float[] array)

@@ -25,6 +25,8 @@ namespace Nima
 		private bool m_IsDirty = true;
 		private bool m_IsWorldDirty = true;
 
+		private bool m_OverrideWorldTransform = false;
+
 		public ActorNode(Actor actor)
 		{
 			m_Actor = actor;
@@ -75,6 +77,27 @@ namespace Nima
 					UpdateTransform();
 				}
 				return m_Transform;
+			}
+		}
+
+		public float[] WorldTransformOverride
+		{
+			get
+			{
+				return m_OverrideWorldTransform ? m_WorldTransform : null;
+			}
+			set
+			{
+				if(value == null)
+				{
+					m_OverrideWorldTransform = false;
+				}
+				else
+				{
+					m_OverrideWorldTransform = true;
+					Mat2D.Copy(m_WorldTransform, value);
+				}
+				MarkWorldDirty();
 			}
 		}
 
@@ -287,9 +310,12 @@ namespace Nima
 			{
 				m_Parent.UpdateTransforms();
 				m_RenderOpacity *= m_Parent.RenderOpacity;
-				Mat2D.Multiply(m_WorldTransform, m_Parent.m_WorldTransform, m_Transform);
+				if(!m_OverrideWorldTransform)
+				{
+					Mat2D.Multiply(m_WorldTransform, m_Parent.m_WorldTransform, m_Transform);
+				}
 			}
-			else
+			else if(!m_OverrideWorldTransform)
 			{
 				Mat2D.Copy(m_WorldTransform, m_Transform);
 			}

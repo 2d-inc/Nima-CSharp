@@ -28,7 +28,7 @@ namespace Nima.Animation
 			}
 		}
 		
-		public static PropertyAnimation Read(BinaryReader reader, ActorNode node)
+		public static PropertyAnimation Read(BlockReader reader, ActorNode node)
 		{
 			PropertyAnimation propertyAnimation = new PropertyAnimation();
 			int type = reader.ReadByte();
@@ -176,7 +176,7 @@ namespace Nima.Animation
 			}
 		}
 
-		public static NodeAnimation Read(BinaryReader reader, ActorNode[] nodes)
+		public static NodeAnimation Read(BlockReader reader, ActorNode[] nodes)
 		{
 			NodeAnimation nodeAnimation = new NodeAnimation();
 
@@ -241,7 +241,7 @@ namespace Nima.Animation
 			}
 		}
 
-		public static ActorAnimation Read(BinaryReader reader, ActorNode[] nodes)
+		public static ActorAnimation Read(BlockReader reader, ActorNode[] nodes)
 		{
 			ActorAnimation animation = new ActorAnimation();
 			animation.m_Name = Actor.ReadString(reader);

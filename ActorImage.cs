@@ -337,6 +337,10 @@ namespace Nima
 
 						node.m_BoneConnections[i] = bc;
 					}
+
+					float[] worldOverride = Mat2D.Create();
+					Actor.ReadFloat32Array(reader, worldOverride);
+					node.WorldTransformOverride = worldOverride;
 				}
 
 				uint numVertices = reader.ReadUInt32();

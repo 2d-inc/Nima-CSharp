@@ -3,7 +3,7 @@ using System.IO;
 using Nima.Math2D;
 
 namespace Nima
-{//test upstream change
+{
 	public class ActorRootBone : ActorNode
 	{
 		public static ActorRootBone Read(Actor actor, BinaryReader reader, ActorRootBone node = null)
