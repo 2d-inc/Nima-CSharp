@@ -51,7 +51,6 @@ namespace Nima
 			}
 			byte blockType = ReadByte();
 			uint length = ReadUInt32();
-			Console.WriteLine("BLOCK TYPE " + blockType + " LENGTH " + length + " " + ((BlockTypes)blockType));
 			byte[] buffer = ReadBytes((int)length);
 			if(buffer.Length != length)
 			{
