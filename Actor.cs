@@ -311,6 +311,11 @@ namespace Nima
 
 			foreach(ActorNode node in actor.Nodes)
 			{
+				if(node == null)
+				{
+					m_Nodes[idx++] = null;
+					continue;
+				}
 				ActorNode instanceNode = node.MakeInstance(this);
 				m_Nodes[idx++] = instanceNode;
 				ActorImage imageInstance = instanceNode as ActorImage;
@@ -323,7 +328,7 @@ namespace Nima
 			m_Root = m_Nodes[0];
 			foreach(ActorNode node in m_Nodes)
 			{
-				if(m_Root == node)
+				if(m_Root == node || node == null)
 				{
 					continue;
 				}
