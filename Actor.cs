@@ -271,7 +271,7 @@ namespace Nima
 			}
 		}
 
-		public void Advance(float seconds)
+		public virtual void Advance(float seconds)
 		{
 			for(int i = 0; i < m_PlayingAnimations.Count; i++)
 			{
@@ -304,6 +304,7 @@ namespace Nima
 		{
 			this.Copy(actor);
 
+			m_PlayingAnimations = new List<Nima.Animation.AnimationInstance>();
 			m_Nodes = new ActorNode[actor.NodeCount];
 			m_ImageNodes = new ActorImage[m_ImageNodeCount];
 			int idx = 0;
