@@ -391,6 +391,7 @@ namespace Nima
 			m_VertexCount = node.m_VertexCount;
 			m_TriangleCount = node.m_TriangleCount;
 			m_Vertices = node.m_Vertices;
+			m_Triangles = node.m_Triangles;
 			if(node.m_AnimationDeformedVertices != null)
 			{
 				m_AnimationDeformedVertices = (float[])node.m_AnimationDeformedVertices.Clone();
