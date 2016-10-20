@@ -1,4 +1,5 @@
 using Nima.Math2D;
+using System;
 using System.IO;
 using System.Collections.Generic;
 
@@ -349,12 +350,13 @@ namespace Nima
 				node.m_Vertices = new float[numVertices * vertexStride];
 				Actor.ReadFloat32Array(reader, node.m_Vertices);
 
+				Console.WriteLine("NAME: " + node.m_Name + " " + numVertices + " " + node.m_Vertices.Length);
+
 				uint numTris = reader.ReadUInt32();
 				node.m_Triangles = new ushort[numTris * 3];
 				node.m_TriangleCount = (int)numTris;
 				Actor.ReadUInt16Array(reader, node.m_Triangles);
 			}
-
 
 			return node;
 		}
