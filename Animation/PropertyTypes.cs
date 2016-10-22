@@ -13,6 +13,7 @@ namespace Nima.Animation
 		Opacity = 6,
 		DrawOrder = 7,
 		Length = 8,
-		VertexDeform = 9
+		VertexDeform = 9,
+		IKStrength = 10
 	};
 }

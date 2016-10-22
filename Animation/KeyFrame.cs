@@ -317,6 +317,29 @@ namespace Nima.Animation
 		}
 	}
 
+	public class KeyFrameIKStrength : KeyFrameNumeric
+	{
+		public static KeyFrame Read(BinaryReader reader, ActorNode node)
+		{
+			KeyFrameIKStrength frame = new KeyFrameIKStrength();
+			if(KeyFrameNumeric.Read(reader, frame))
+			{
+				return frame;
+			}
+			return null;
+		}
+
+		protected override void SetValue(ActorNode node, float value, float mix)
+		{
+			ActorIKTarget target = node as ActorIKTarget;
+			if(target == null)
+			{
+				return;
+			}
+			target.Strength = target.Strength * (1.0f - mix) + value * mix;
+		}
+	}
+
 	public class KeyFrameDrawOrder : KeyFrame
 	{
 		private struct DrawOrderIndex

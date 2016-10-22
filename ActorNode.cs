@@ -11,6 +11,7 @@ namespace Nima
 		protected ActorNode m_Parent;
 		protected Actor m_Actor;
 		protected List<ActorNode> m_Children;
+		protected List<ActorNode> m_Dependents;
 		protected float[] m_Transform = Mat2D.Create();
 		protected float[] m_WorldTransform = Mat2D.Create();
 
@@ -24,8 +25,11 @@ namespace Nima
 
 		private bool m_IsDirty = true;
 		private bool m_IsWorldDirty = true;
+		private bool m_SuppressMarkDirty = false;
 
 		private bool m_OverrideWorldTransform = false;
+		private bool m_OverrideRotation = false;
+		private float m_OverrideRotationValue = 0.0f;
 
 		public ActorNode(Actor actor)
 		{
@@ -34,6 +38,17 @@ namespace Nima
 
 		public ActorNode()
 		{
+		}
+		public bool SuppressMarkDirty
+		{
+			get
+			{
+				return m_SuppressMarkDirty;
+			}
+			set
+			{
+				m_SuppressMarkDirty = value;
+			}
 		}
 
 		public bool IsWorldDirty
@@ -236,6 +251,14 @@ namespace Nima
 			}
 		}
 
+		public ActorNode Parent
+		{
+			get
+			{
+				return m_Parent;
+			}
+		}
+
 		public ushort Idx
 		{
 			get
@@ -259,28 +282,84 @@ namespace Nima
 
 		public void MarkWorldDirty()
 		{
-			if(m_IsWorldDirty)
+			if(m_IsWorldDirty || m_SuppressMarkDirty)
 			{
 				return;
 			}
 			m_IsWorldDirty = true;
 			if(m_Children != null)
 			{
-				for(var i = 0; i < m_Children.Count; i++)
+				foreach(ActorNode node in m_Children)
 				{
-					m_Children[i].MarkWorldDirty();
+					node.MarkWorldDirty();
 				}
 			}
+			if(m_Dependents != null)
+			{
+				foreach(ActorNode node in m_Dependents)
+				{
+					node.MarkWorldDirty();
+				}
+			}
+		}
+
+		public void AddDependent(ActorNode node)
+		{
+			if(m_Dependents == null)
+			{
+				m_Dependents = new List<ActorNode>();
+			}
+			m_Dependents.Add(node);
 		}
 
 		private void UpdateTransform()
 		{
 			m_IsDirty = false;
 
-			Mat2D.FromRotation(m_Transform, m_Rotation);
+			Mat2D.FromRotation(m_Transform, m_OverrideRotation ? m_OverrideRotationValue : m_Rotation);
 			m_Transform[4] = m_Translation[0];
 			m_Transform[5] = m_Translation[1];
 			Mat2D.Scale(m_Transform, m_Transform, m_Scale);
+		}
+
+		public float[] GetWorldTranslation(float[] vec)
+		{
+			if(m_IsWorldDirty)
+			{
+				UpdateWorldTransform();
+			}
+			vec[0] = m_WorldTransform[4];
+			vec[1] = m_WorldTransform[5];
+			return vec;
+		}
+
+		public void SetRotationOverride(float v)
+		{
+			if(!m_OverrideRotation || m_OverrideRotationValue != v)
+			{
+				m_OverrideRotation = true;
+				m_OverrideRotationValue = v;
+				MarkDirty();
+				MarkWorldDirty();
+			}
+		}
+
+		public void ClearRotationOverride()
+		{
+			if(m_OverrideRotation)
+			{
+				m_OverrideRotation = false;
+				MarkDirty();
+				MarkWorldDirty();
+			}
+		}
+
+		public float OverrideRotationValue
+		{
+			get
+			{
+				return m_OverrideRotationValue;
+			}
 		}
 
 		public void UpdateTransforms()
@@ -379,6 +458,9 @@ namespace Nima
 			m_RenderOpacity = node.m_RenderOpacity;
 			m_ParentIdx = node.m_ParentIdx;
 			m_Idx = node.m_Idx;
+			m_OverrideWorldTransform = node.m_OverrideWorldTransform;
+			m_OverrideRotation = node.m_OverrideRotation;
+			m_OverrideRotationValue = node.m_OverrideRotationValue;
 		}
 	}
 }

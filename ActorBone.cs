@@ -49,6 +49,15 @@ namespace Nima
 				m_IsConnectedToImage = value;
 			}
 		}
+		public float[] GetTipWorldTranslation(float[] vec)
+		{
+			float[] transform = Mat2D.Create();
+			transform[4] = Length;
+			Mat2D.Multiply(transform, WorldTransform, transform);
+			vec[0] = transform[4];
+			vec[1] = transform[5];
+			return vec;
+		}
 
 		public static ActorBone Read(Actor actor, BinaryReader reader, ActorBone node = null)
 		{

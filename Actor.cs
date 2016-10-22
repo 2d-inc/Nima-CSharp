@@ -10,9 +10,11 @@ namespace Nima
 		protected ActorNode m_Root;
 		protected ActorNode[] m_Nodes;
 		protected ActorImage[] m_ImageNodes;
+		protected ISolver[] m_SolverNodes;
 		protected Nima.Animation.ActorAnimation[] m_Animations;
 		protected int m_MaxTextureIndex;
 		protected int m_ImageNodeCount;
+		protected int m_SolverNodeCount;
 
 		public IEnumerable<ActorNode> Nodes
 		{
@@ -59,6 +61,14 @@ namespace Nima
 			get
 			{
 				return m_ImageNodeCount;
+			}
+		}
+
+		public int SolverNodeCount
+		{
+			get
+			{
+				return m_SolverNodeCount;
 			}
 		}
 
@@ -127,8 +137,13 @@ namespace Nima
 						break;
 
 					case BlockTypes.ActorIKTarget:
-						//node = ActorIKTarget.Read(actor, nodeBlock);
+						node = ActorIKTarget.Read(this, nodeBlock);
 						break;
+				}
+
+				if(node is ISolver)
+				{
+					m_SolverNodeCount++;
 				}
 
 				m_Nodes[nodeIndex] = node;
@@ -140,9 +155,11 @@ namespace Nima
 			}
 
 			m_ImageNodes = new ActorImage[m_ImageNodeCount];
+			m_SolverNodes = new ISolver[m_SolverNodeCount];
 
 			// Resolve nodes.
 			int imgIdx = 0;
+			int slvIdx = 0;
 			ActorNode[] nodes = m_Nodes;
 			for(int i = 1; i <= nodeCount; i++)
 			{
@@ -157,6 +174,12 @@ namespace Nima
 				if(ain != null)
 				{
 					m_ImageNodes[imgIdx++] = ain;
+				}
+
+				ISolver slv = n as ISolver;
+				if(slv != null)
+				{
+					m_SolverNodes[slvIdx++] = slv;
 				}
 			}
 		}
@@ -256,6 +279,7 @@ namespace Nima
 			m_Animations = actor.m_Animations;
 			m_MaxTextureIndex = actor.m_MaxTextureIndex;
 			m_ImageNodeCount = actor.m_ImageNodeCount;
+			m_SolverNodeCount = actor.m_SolverNodeCount;
 		}
 	}
 
@@ -263,6 +287,14 @@ namespace Nima
 	{
 		private List<Nima.Animation.AnimationInstance> m_PlayingAnimations;
 
+		private class SolverComparer : IComparer<ISolver>
+		{
+			public int Compare(ISolver x, ISolver y)  
+			{
+				return x.Order.CompareTo(y.Order);
+			}
+		}
+		static SolverComparer sm_SolverComparer = new SolverComparer();
 		public ActorNode[] AllNodes
 		{
 			get
@@ -279,6 +311,56 @@ namespace Nima
 				{
 					m_PlayingAnimations.RemoveAt(i);
 					i--;
+				}
+			}
+			
+			bool runSolvers = false;
+			if(m_SolverNodes != null)
+			{
+				foreach(ISolver solver in m_SolverNodes)
+				{
+					if(solver.NeedsSolve)
+					{
+						runSolvers = true;
+						break;
+					}
+				}
+			}
+
+			foreach(ActorNode n in m_Nodes)
+			{
+				n.UpdateTransforms();
+			}
+
+			if(runSolvers)
+			{
+				for(int i = 0; i < m_SolverNodeCount; i++)
+				{
+					ISolver solver = m_SolverNodes[i];
+					solver.SolveStart();
+				}	
+
+				for(int i = 0; i < m_SolverNodeCount; i++)
+				{
+					ISolver solver = m_SolverNodes[i];
+					solver.Solve();
+				}
+
+				for(int i = 0; i < m_SolverNodeCount; i++)
+				{
+					ISolver solver = m_SolverNodes[i];
+					solver.SuppressMarkDirty = true;
+				}
+					
+				foreach(ActorNode n in m_Nodes)
+				{
+					n.UpdateTransforms();
+				}
+
+				for(int i = 0; i < m_SolverNodeCount; i++)
+				{
+					ISolver solver = m_SolverNodes[i];
+					solver.SuppressMarkDirty = false;
 				}
 			}
 		}
@@ -307,8 +389,13 @@ namespace Nima
 			m_PlayingAnimations = new List<Nima.Animation.AnimationInstance>();
 			m_Nodes = new ActorNode[actor.NodeCount];
 			m_ImageNodes = new ActorImage[m_ImageNodeCount];
+			if(m_SolverNodeCount != 0)
+			{
+				m_SolverNodes = new ISolver[m_SolverNodeCount];
+			}
 			int idx = 0;
 			int imgIdx = 0;
+			int slvIdx = 0;
 
 			foreach(ActorNode node in actor.Nodes)
 			{
@@ -324,6 +411,12 @@ namespace Nima
 				{
 					m_ImageNodes[imgIdx++] = imageInstance;
 				}
+
+				ISolver solver = instanceNode as ISolver;
+				if(solver != null)
+				{
+					m_SolverNodes[slvIdx++] = solver;
+				}
 			}
 
 			m_Root = m_Nodes[0];
@@ -335,6 +428,9 @@ namespace Nima
 				}
 				node.ResolveNodeIndices(m_Nodes);
 			}
+
+			// Sort the solvers.
+			Array.Sort<ISolver>(m_SolverNodes, sm_SolverComparer);
 		}
 	}
 }
