@@ -191,6 +191,7 @@ namespace Nima
 			m_Animations = new Nima.Animation.ActorAnimation[animationCount];
 			BlockReader animationBlock = null;
 			int animationIndex = 0;
+			
 			while((animationBlock=block.ReadNextBlock()) != null)
 			{
 				switch(animationBlock.BlockType)
@@ -430,7 +431,10 @@ namespace Nima
 			}
 
 			// Sort the solvers.
-			Array.Sort<ISolver>(m_SolverNodes, sm_SolverComparer);
+			if(m_SolverNodes != null)
+			{
+				Array.Sort<ISolver>(m_SolverNodes, sm_SolverComparer);
+			}
 		}
 	}
 }
