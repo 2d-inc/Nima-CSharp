@@ -202,7 +202,7 @@ namespace Nima.Animation
 				}
 				else
 				{
-					var D = q * q / 4.0 + p * p * p / 27.0;
+					double D = q * q / 4.0 + p * p * p / 27.0;
 					if (Math.Abs(D) < m_Epsilon)
 					{
 						// D = 0 -> two roots
