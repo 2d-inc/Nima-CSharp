@@ -3,38 +3,21 @@ using System.IO;
 
 namespace Nima
 {
-	public enum BlockTypes
-	{
-		Unknown = 0,
-		Nodes = 1,
-		ActorNode = 2,
-		ActorBone = 3,
-		ActorRootBone = 4,
-		ActorImage = 5,
-		View = 6,
-		Animation = 7,
-		Animations = 8,
-		Atlases = 9,
-		Atlas = 10,
-		ActorIKTarget = 11
-	};
-
-
 	public class BlockReader : BinaryReader
 	{
-		private BlockTypes m_BlockType;
+		private int m_BlockType;
 
 		public BlockReader(Stream stream) : base(stream)
 		{
 			m_BlockType = 0;
 		}
 
-		public BlockReader(BlockTypes type, MemoryStream stream) : base(stream)
+		public BlockReader(int type, MemoryStream stream) : base(stream)
 		{
 			m_BlockType = type;
 		}
 
-		public BlockTypes BlockType
+		public int BlockType
 		{
 			get
 			{
@@ -56,7 +39,7 @@ namespace Nima
 			{
 				return null;
 			}
-			return new BlockReader((BlockTypes)blockType, new MemoryStream(buffer));
+			return new BlockReader((int)blockType, new MemoryStream(buffer));
 		}
 	}
 }

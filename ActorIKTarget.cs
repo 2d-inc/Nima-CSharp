@@ -98,12 +98,14 @@ namespace Nima
 
 					ActorBone b1c = m_Bone2;
 					ActorBone b1 = m_Bone1;
-					while(b1c != null && b1c.Parent != b1)
+					if(m_InfluencedBones.Length > 1)
 					{
-						b1c = b1c.Parent as ActorBone;
-					}
+						while(b1c != null && b1c.Parent != b1)
+						{
+							b1c = b1c.Parent as ActorBone;
+						}
+					}	
 					m_Bone1Child = b1c;
-					
 					int chainCount = 0;
 					ActorBone end = m_Bone2;
 					while(end != null && end != b1.Parent)

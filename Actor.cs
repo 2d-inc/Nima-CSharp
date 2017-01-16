@@ -7,6 +7,22 @@ namespace Nima
 {
 	public class Actor
 	{
+		public enum BlockTypes
+		{
+			Unknown = 0,
+			Nodes = 1,
+			ActorNode = 2,
+			ActorBone = 3,
+			ActorRootBone = 4,
+			ActorImage = 5,
+			View = 6,
+			Animation = 7,
+			Animations = 8,
+			Atlases = 9,
+			Atlas = 10,
+			ActorIKTarget = 11
+		};
+
 		protected ActorNode m_Root;
 		protected ActorNode[] m_Nodes;
 		protected ActorImage[] m_ImageNodes;
@@ -113,34 +129,37 @@ namespace Nima
 			while((nodeBlock=block.ReadNextBlock()) != null)
 			{
 				ActorNode node = null;
-				switch(nodeBlock.BlockType)
+				if(Enum.IsDefined(typeof(BlockTypes), nodeBlock.BlockType))
 				{
-					case BlockTypes.ActorNode:
-						node = ActorNode.Read(this, nodeBlock);
-						break;
+					BlockTypes type = (BlockTypes)nodeBlock.BlockType;
+					switch(type)
+					{
+						case BlockTypes.ActorNode:
+							node = ActorNode.Read(this, nodeBlock);
+							break;
 
-					case BlockTypes.ActorBone:
-						node = ActorBone.Read(this, nodeBlock);
-						break;
+						case BlockTypes.ActorBone:
+							node = ActorBone.Read(this, nodeBlock);
+							break;
 
-					case BlockTypes.ActorRootBone:
-						node = ActorRootBone.Read(this, nodeBlock);
-						break;
+						case BlockTypes.ActorRootBone:
+							node = ActorRootBone.Read(this, nodeBlock);
+							break;
 
-					case BlockTypes.ActorImage:
-						m_ImageNodeCount++;
-						node = ActorImage.Read(this, nodeBlock);
-						if((node as ActorImage).TextureIndex > m_MaxTextureIndex)
-						{
-							m_MaxTextureIndex = (node as ActorImage).TextureIndex;
-						}
-						break;
+						case BlockTypes.ActorImage:
+							m_ImageNodeCount++;
+							node = ActorImage.Read(this, nodeBlock);
+							if((node as ActorImage).TextureIndex > m_MaxTextureIndex)
+							{
+								m_MaxTextureIndex = (node as ActorImage).TextureIndex;
+							}
+							break;
 
-					case BlockTypes.ActorIKTarget:
-						node = ActorIKTarget.Read(this, nodeBlock);
-						break;
+						case BlockTypes.ActorIKTarget:
+							node = ActorIKTarget.Read(this, nodeBlock);
+							break;
+					}
 				}
-
 				if(node is ISolver)
 				{
 					m_SolverNodeCount++;
@@ -196,7 +215,7 @@ namespace Nima
 			{
 				switch(animationBlock.BlockType)
 				{
-					case BlockTypes.Animation:
+					case (int)BlockTypes.Animation:
 						Nima.Animation.ActorAnimation anim = Nima.Animation.ActorAnimation.Read(animationBlock, m_Nodes);
 						m_Animations[animationIndex++] = anim;
 						//ReadAnimationBlock(actor, block);
@@ -220,7 +239,7 @@ namespace Nima
 			{
 				return null;
 			}
-			if(version != 11)
+			if(version != 12)
 			{
 				return null;
 			}
@@ -238,10 +257,10 @@ namespace Nima
 			{
 				switch(block.BlockType)
 				{
-					case BlockTypes.Nodes:
+					case (int)BlockTypes.Nodes:
 						actor.ReadNodesBlock(block);
 						break;
-					case BlockTypes.Animations:
+					case (int)BlockTypes.Animations:
 						actor.ReadAnimationsBlock(block);
 						break;
 				}

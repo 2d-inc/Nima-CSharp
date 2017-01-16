@@ -30,8 +30,13 @@ namespace Nima.Animation
 		
 		public static PropertyAnimation Read(BlockReader reader, ActorNode node)
 		{
+			BlockReader propertyBlock = reader.ReadNextBlock();
+			if(propertyBlock == null)
+			{
+				return null;
+			}
 			PropertyAnimation propertyAnimation = new PropertyAnimation();
-			int type = reader.ReadByte();
+			int type = propertyBlock.BlockType;
 			if(!Enum.IsDefined(typeof(PropertyTypes), type))
 			{
 				return null;
@@ -76,12 +81,12 @@ namespace Nima.Animation
 
 				}
 
-				int keyFrameCount = reader.ReadUInt16();
+				int keyFrameCount = propertyBlock.ReadUInt16();
 				propertyAnimation.m_KeyFrames = new KeyFrame[keyFrameCount];
 				KeyFrame lastKeyFrame = null;
 				for(int i = 0; i < keyFrameCount; i++)
 				{
-					KeyFrame frame = keyFrameReader(reader, node);
+					KeyFrame frame = keyFrameReader(propertyBlock, node);
 					propertyAnimation.m_KeyFrames[i] = frame;
 					if(lastKeyFrame != null)
 					{
