@@ -6,7 +6,6 @@ namespace Nima.Animation
 	// AE style curve interpolation
 	public class ValueTimeCurveInterpolator : KeyFrameInterpolator
 	{
-		private float m_Value;
 		private double m_InFactor;
 		private float m_InValue;
 		private double m_OutFactor;

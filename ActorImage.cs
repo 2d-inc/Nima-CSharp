@@ -60,7 +60,7 @@ namespace Nima
 		private BoneConnection[] m_BoneConnections;
 		public float[] m_BoneMatrices;
 
-		public int ConnectedBonesCount
+		public int ConnectedBoneCount
 		{
 			get
 			{
@@ -228,6 +228,11 @@ namespace Nima
 			{
 				m_IsVertexDeformDirty = value;
 			}
+		}
+
+		public ActorImage()
+		{
+			m_TextureIndex = -1;
 		}
 
 		public void DisposeGeometry()
