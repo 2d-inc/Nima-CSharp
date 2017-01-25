@@ -49,9 +49,9 @@ namespace Nima
 				m_IsConnectedToImage = value;
 			}
 		}
-		public float[] GetTipWorldTranslation(float[] vec)
+		public Vec2D GetTipWorldTranslation(Vec2D vec)
 		{
-			float[] transform = Mat2D.Create();
+			Mat2D transform = new Mat2D();
 			transform[4] = Length;
 			Mat2D.Multiply(transform, WorldTransform, transform);
 			vec[0] = transform[4];

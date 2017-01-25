@@ -29,8 +29,8 @@ namespace Nima
 		{
 			public ushort m_BoneIdx;
 			public ActorNode m_Node;
-			public float[] m_Bind = Mat2D.Create();
-			public float[] m_InverseBind = Mat2D.Create();
+			public Mat2D m_Bind = new Mat2D();
+			public Mat2D m_InverseBind = new Mat2D();
 
 			public ActorNode Node
 			{
@@ -40,7 +40,7 @@ namespace Nima
 				}
 			}
 
-			public float[] Bind
+			public Mat2D Bind
 			{
 				get
 				{
@@ -48,7 +48,7 @@ namespace Nima
 				}
 			}
 
-			public float[] InverseBind
+			public Mat2D InverseBind
 			{
 				get
 				{
@@ -270,7 +270,7 @@ namespace Nima
 			{
 				InstanceBoneMatrices();
 
-				float[] mat = Mat2D.Create();
+				Mat2D mat = new Mat2D();
 				int bidx = 6;
 				foreach(BoneConnection bc in m_BoneConnections)
 				{
@@ -299,7 +299,7 @@ namespace Nima
 				foreach(BoneConnection bc in m_BoneConnections)
 				{
 					bc.m_Node.UpdateTransforms();
-					float[] mat = bc.m_Node.WorldTransform;
+					Mat2D mat = bc.m_Node.WorldTransform;
 
 					m_BoneMatrices[bidx++] = mat[0];
 					m_BoneMatrices[bidx++] = mat[1];
@@ -338,14 +338,14 @@ namespace Nima
 					{
 						BoneConnection bc = new BoneConnection();
 						bc.m_BoneIdx = reader.ReadUInt16();
-						Actor.ReadFloat32Array(reader, bc.m_Bind);
+						Actor.ReadFloat32Array(reader, bc.m_Bind.Values);
 						Mat2D.Invert(bc.m_InverseBind, bc.m_Bind);
 
 						node.m_BoneConnections[i] = bc;
 					}
 
-					float[] worldOverride = Mat2D.Create();
-					Actor.ReadFloat32Array(reader, worldOverride);
+					Mat2D worldOverride = new Mat2D();
+					Actor.ReadFloat32Array(reader, worldOverride.Values);
 					node.WorldTransformOverride = worldOverride;
 				}
 

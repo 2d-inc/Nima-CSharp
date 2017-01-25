@@ -2,27 +2,50 @@ using System;
 
 namespace Nima.Math2D
 {
-	public static class	Vec2D
+	public class Vec2D
 	{
-		public static float[] Create()
+		private float[] m_Buffer;
+
+		public float this[int index]
 		{
-			return new float[2];
+			get
+			{
+				return m_Buffer[index];	
+			}
+			set
+			{
+				m_Buffer[index] = value;
+			}
 		}
 
-		public static float[] Clone(float[] o)
+
+		public float[] Values
 		{
-			return new float[2] { o[0], o[1] };
+			get
+			{
+				return m_Buffer;
+			}
 		}
 
-		public static float[] Create(float x, float y)
+		public Vec2D()
 		{
-			float[] r = new float[2];
-			r[0] = x;
-			r[1] = y;
-			return r;
+			m_Buffer = new float[2]{0.0f, 0.0f};
+		}
+		
+		public Vec2D(float x, float y) : this()
+		{
+			m_Buffer[0] = x;
+			m_Buffer[1] = y;
 		}
 
-		public static float[] TransformMat2D(float[] o, float[] a, float[] m) 
+		public Vec2D(Vec2D copy) : this()
+		{
+			m_Buffer[0] = copy.m_Buffer[0];
+			m_Buffer[1] = copy.m_Buffer[1];
+		}
+
+
+		public static Vec2D TransformMat2D(Vec2D o, Vec2D a, Mat2D m) 
 		{
 			float x = a[0];
 	        float y = a[1];
@@ -31,14 +54,14 @@ namespace Nima.Math2D
 	    	return o;
 		}
 
-		public static float[] Subtract(float[] o, float[] a, float[] b) 
+		public static Vec2D Subtract(Vec2D o, Vec2D a, Vec2D b) 
 		{
 	    	o[0] = a[0] - b[0];
 	    	o[1] = a[1] - b[1];
 	    	return o;
 		}
 
-		public static float Length(float[] a) 
+		public static float Length(Vec2D a) 
 		{
 	    	float x = a[0];
 	        float y = a[1];

@@ -12,12 +12,12 @@ namespace Nima
 		protected Actor m_Actor;
 		protected List<ActorNode> m_Children;
 		protected List<ActorNode> m_Dependents;
-		protected float[] m_Transform = Mat2D.Create();
-		protected float[] m_WorldTransform = Mat2D.Create();
+		protected Mat2D m_Transform = new Mat2D();
+		protected Mat2D m_WorldTransform = new Mat2D();
 
-		protected float[] m_Translation = Vec2D.Create();
+		protected Vec2D m_Translation = new Vec2D();
 		protected float m_Rotation = 0.0f;
-		protected float[] m_Scale = Vec2D.Create(1.0f, 1.0f);
+		protected Vec2D m_Scale = new Vec2D(1.0f, 1.0f);
 		protected float m_Opacity = 1.0f;
 		protected float m_RenderOpacity = 1.0f;
 		private ushort m_ParentIdx = 0;
@@ -83,7 +83,7 @@ namespace Nima
 			}
 		}
 
-		public float[] Transform
+		public Mat2D Transform
 		{
 			get
 			{
@@ -95,7 +95,7 @@ namespace Nima
 			}
 		}
 
-		public float[] WorldTransformOverride
+		public Mat2D WorldTransformOverride
 		{
 			get
 			{
@@ -116,7 +116,7 @@ namespace Nima
 			}
 		}
 
-		public float[] WorldTransform
+		public Mat2D WorldTransform
 		{
 			get
 			{
@@ -322,7 +322,7 @@ namespace Nima
 			Mat2D.Scale(m_Transform, m_Transform, m_Scale);
 		}
 
-		public float[] GetWorldTranslation(float[] vec)
+		public Vec2D GetWorldTranslation(Vec2D vec)
 		{
 			if(m_IsWorldDirty)
 			{
@@ -409,9 +409,9 @@ namespace Nima
 			node.m_Actor = actor;
 			node.m_Name = Actor.ReadString(reader);
 			node.m_ParentIdx = reader.ReadUInt16();
-			Actor.ReadFloat32Array(reader, node.m_Translation);
+			Actor.ReadFloat32Array(reader, node.m_Translation.Values);
 			node.m_Rotation = reader.ReadSingle();
-			Actor.ReadFloat32Array(reader, node.m_Scale);
+			Actor.ReadFloat32Array(reader, node.m_Scale.Values);
 			node.m_Opacity = reader.ReadSingle();
 
 			return node;
@@ -449,10 +449,10 @@ namespace Nima
 			m_Actor = resetActor;
 			m_IsDirty = true;
 			m_IsWorldDirty = true;
-			m_Transform = Mat2D.Clone(node.m_Transform);
-			m_WorldTransform = Mat2D.Clone(node.m_WorldTransform);
-			m_Translation = Vec2D.Clone(node.m_Translation);
-			m_Scale = Vec2D.Clone(node.m_Scale);
+			m_Transform = new Mat2D(node.m_Transform);
+			m_WorldTransform = new Mat2D(node.m_WorldTransform);
+			m_Translation = new Vec2D(node.m_Translation);
+			m_Scale = new Vec2D(node.m_Scale);
 			m_Rotation = node.m_Rotation;
 			m_Opacity = node.m_Opacity;
 			m_RenderOpacity = node.m_RenderOpacity;

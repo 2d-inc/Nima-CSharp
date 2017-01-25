@@ -201,9 +201,9 @@ namespace Nima
 			}
 		}
 
-		private void Solve2(ActorBone b1, ActorBone b2, float[] worldTargetTranslation, bool invert)
+		private void Solve2(ActorBone b1, ActorBone b2, Vec2D worldTargetTranslation, bool invert)
 		{
-			float[] world = b1.Parent.WorldTransform;
+			Mat2D world = b1.Parent.WorldTransform;
 			ActorBone b1c = b2;
 			while(b1c != null && b1c.Parent != b1)
 			{
@@ -214,19 +214,19 @@ namespace Nima
 			// If it's an ActorRootBone, it has no length.
 			if(b1p != null && b1p.Length > 0.0f)
 			{
-				float[] t = Mat2D.Create();
+				Mat2D t = new Mat2D();
 				t[4] = b1p.Length;
 				Mat2D.Multiply(t, world, t);
 				world = t;
 			}
 
-			float[] iworld = Mat2D.Create();
+			Mat2D iworld = new Mat2D();
 			Mat2D.Invert(iworld, world);
 
-			float[] pA = b1.GetWorldTranslation(Vec2D.Create());
-			float[] pC = b1.GetTipWorldTranslation(Vec2D.Create());
-			float[] pB = b2.GetTipWorldTranslation(Vec2D.Create());
-			float[] pBT = Vec2D.Clone(worldTargetTranslation);
+			Vec2D pA = b1.GetWorldTranslation(new Vec2D());
+			Vec2D pC = b1.GetTipWorldTranslation(new Vec2D());
+			Vec2D pB = b2.GetTipWorldTranslation(new Vec2D());
+			Vec2D pBT = new Vec2D(worldTargetTranslation);
 
 			Vec2D.TransformMat2D(pA, pA, iworld);
 			Vec2D.TransformMat2D(pC, pC, iworld);
@@ -234,13 +234,13 @@ namespace Nima
 			 Vec2D.TransformMat2D(pBT, pBT, iworld);
 
 			// http://mathworld.wolfram.com/LawofCosines.html
-			float[] av = Vec2D.Subtract(Vec2D.Create(), pB, pC);
+			Vec2D av = Vec2D.Subtract(new Vec2D(), pB, pC);
 			float a = Vec2D.Length(av);
 
-			float[] bv = Vec2D.Subtract(Vec2D.Create(), pC, pA);
+			Vec2D bv = Vec2D.Subtract(new Vec2D(), pC, pA);
 			float b = Vec2D.Length(bv);
 
-			float[] cv = Vec2D.Subtract(Vec2D.Create(), pBT, pA);
+			Vec2D cv = Vec2D.Subtract(new Vec2D(), pBT, pA);
 			float c = Vec2D.Length(cv);
 
 			float A = (float)Math.Acos((double)Math.Max(-1.0f,Math.Min(1.0f,(-a*a+b*b+c*c)/(2.0f*b*c))));
@@ -249,11 +249,11 @@ namespace Nima
 			float angleCorrection = 0;
 			if(b1c != b2)
 			{
-				float[] iworld2 = Mat2D.Create();
+				Mat2D iworld2 = new Mat2D();
 				Mat2D.Invert(iworld2, b1c.WorldTransform);
 
-				float[] pa2 = b2.GetTipWorldTranslation(Vec2D.Create());
-				float[] tipBone2Local = Vec2D.TransformMat2D(pa2, pa2, iworld2);
+				Vec2D pa2 = b2.GetTipWorldTranslation(new Vec2D());
+				Vec2D tipBone2Local = Vec2D.TransformMat2D(pa2, pa2, iworld2);
 				angleCorrection = -(float)Math.Atan2((double)tipBone2Local[1], (double)tipBone2Local[0]);
 			}
 			if(invert)
@@ -268,12 +268,12 @@ namespace Nima
 			}
 		}
 		
-		private void Solve1(ActorBone b1, float[] worldTargetTranslation)
+		private void Solve1(ActorBone b1, Vec2D worldTargetTranslation)
 		{
-			float[] iworld2 = Mat2D.Create();
+			Mat2D iworld2 = new Mat2D();
 			Mat2D.Invert(iworld2, b1.WorldTransform);
 
-			float[] targetLocal = Vec2D.TransformMat2D(Vec2D.Create(), worldTargetTranslation, iworld2);
+			Vec2D targetLocal = Vec2D.TransformMat2D(new Vec2D(), worldTargetTranslation, iworld2);
 			float a = (float)Math.Atan2((double)targetLocal[1], (double)targetLocal[0]);
 
 			b1.SetRotationOverride(b1.OverrideRotationValue+a);
@@ -285,8 +285,8 @@ namespace Nima
 			{
 				return;
 			}
-			float[] worldTargetTranslation = Vec2D.Create();
-			float[] wt = WorldTransform;
+			Vec2D worldTargetTranslation = new Vec2D();
+			Mat2D wt = WorldTransform;
 			worldTargetTranslation[0] = wt[4];
 			worldTargetTranslation[1] = wt[5];
 
