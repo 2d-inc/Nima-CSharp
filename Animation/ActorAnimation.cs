@@ -241,11 +241,11 @@ namespace Nima.Animation
 			}
 		}
 
-		public void Apply(float time, ActorNode[] nodes, float mix)
+		public void Apply(float time, Actor actor, float mix)
 		{
 			foreach(NodeAnimation nodeAnimation in m_AnimatedNodes)
 			{
-				nodeAnimation.Apply(time, nodes, mix);
+				nodeAnimation.Apply(time, actor.AllNodes, mix);
 			}
 		}
 
@@ -266,7 +266,7 @@ namespace Nima.Animation
 
 			return animation;
 		}
-	}
+	}/*
 
 	public enum AnimationInstanceState
 	{
@@ -424,5 +424,5 @@ namespace Nima.Animation
 
 			return m_RemoveWhenComplete && m_State == AnimationInstanceState.Out;
 		}
-	}
+	}*/
 }

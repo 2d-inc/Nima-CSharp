@@ -53,6 +53,14 @@ namespace Nima
 			}
 		}
 
+		public ActorNode[] AllNodes
+		{
+			get
+			{
+				return m_Nodes;
+			}
+		}
+
 		public IEnumerable<ActorImage> ImageNodes
 		{
 			get
@@ -497,7 +505,7 @@ namespace Nima
 			}
 		}
 	}
-
+/*
 	public class ActorInstance : Actor
 	{
 		private List<Nima.Animation.AnimationInstance> m_PlayingAnimations;
@@ -650,5 +658,5 @@ namespace Nima
 				Array.Sort<ISolver>(m_SolverNodes, sm_SolverComparer);
 			}
 		}
-	}
+	}*/
 }
