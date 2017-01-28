@@ -61,6 +61,14 @@ namespace Nima
 			}
 		}
 
+		public IEnumerable<Nima.Animation.ActorAnimation> Animations
+		{
+			get
+			{
+				return m_Animations;
+			}
+		}
+
 		public IEnumerable<ActorImage> ImageNodes
 		{
 			get
@@ -132,6 +140,18 @@ namespace Nima
 				if(a.Name == name)
 				{
 					return a;
+				}
+			}
+			return null;
+		}
+
+		public ActorNode GetNode(string name)
+		{
+			foreach(ActorNode node in m_Nodes)
+			{
+				if(node.Name == name)
+				{
+					return node;
 				}
 			}
 			return null;
@@ -505,158 +525,4 @@ namespace Nima
 			}
 		}
 	}
-/*
-	public class ActorInstance : Actor
-	{
-		private List<Nima.Animation.AnimationInstance> m_PlayingAnimations;
-
-		private class SolverComparer : IComparer<ISolver>
-		{
-			public int Compare(ISolver x, ISolver y)  
-			{
-				return x.Order.CompareTo(y.Order);
-			}
-		}
-		static SolverComparer sm_SolverComparer = new SolverComparer();
-		public ActorNode[] AllNodes
-		{
-			get
-			{
-				return m_Nodes;
-			}
-		}
-
-		public virtual void Advance(float seconds)
-		{
-			for(int i = 0; i < m_PlayingAnimations.Count; i++)
-			{
-				if(m_PlayingAnimations[i].Advance(seconds))
-				{
-					m_PlayingAnimations.RemoveAt(i);
-					i--;
-				}
-			}
-			
-			bool runSolvers = false;
-			if(m_SolverNodes != null)
-			{
-				foreach(ISolver solver in m_SolverNodes)
-				{
-					if(solver.NeedsSolve)
-					{
-						runSolvers = true;
-						break;
-					}
-				}
-			}
-
-			foreach(ActorNode n in m_Nodes)
-			{
-				n.UpdateTransforms();
-			}
-
-			if(runSolvers)
-			{
-				for(int i = 0; i < m_SolverNodeCount; i++)
-				{
-					ISolver solver = m_SolverNodes[i];
-					solver.SolveStart();
-				}	
-
-				for(int i = 0; i < m_SolverNodeCount; i++)
-				{
-					ISolver solver = m_SolverNodes[i];
-					solver.Solve();
-				}
-
-				for(int i = 0; i < m_SolverNodeCount; i++)
-				{
-					ISolver solver = m_SolverNodes[i];
-					solver.SuppressMarkDirty = true;
-				}
-					
-				foreach(ActorNode n in m_Nodes)
-				{
-					n.UpdateTransforms();
-				}
-
-				for(int i = 0; i < m_SolverNodeCount; i++)
-				{
-					ISolver solver = m_SolverNodes[i];
-					solver.SuppressMarkDirty = false;
-				}
-			}
-		}
-
-		public Nima.Animation.AnimationInstance Play(string name, bool loop = false)
-		{
-			Nima.Animation.ActorAnimation animation = GetAnimation(name);
-			return Play(animation, loop);
-		}
-
-		public Nima.Animation.AnimationInstance Play(Nima.Animation.ActorAnimation animation, bool loop = false)
-		{
-			if(animation == null)
-			{
-				return null;
-			}
-			Nima.Animation.AnimationInstance animationInstance = new Nima.Animation.AnimationInstance(this, animation, loop);
-			m_PlayingAnimations.Add(animationInstance);
-			return animationInstance;
-		}
-
-		public ActorInstance(Actor actor)
-		{
-			this.Copy(actor);
-
-			m_PlayingAnimations = new List<Nima.Animation.AnimationInstance>();
-			m_Nodes = new ActorNode[actor.NodeCount];
-			m_ImageNodes = new ActorImage[m_ImageNodeCount];
-			if(m_SolverNodeCount != 0)
-			{
-				m_SolverNodes = new ISolver[m_SolverNodeCount];
-			}
-			int idx = 0;
-			int imgIdx = 0;
-			int slvIdx = 0;
-
-			foreach(ActorNode node in actor.Nodes)
-			{
-				if(node == null)
-				{
-					m_Nodes[idx++] = null;
-					continue;
-				}
-				ActorNode instanceNode = node.MakeInstance(this);
-				m_Nodes[idx++] = instanceNode;
-				ActorImage imageInstance = instanceNode as ActorImage;
-				if(imageInstance != null)
-				{
-					m_ImageNodes[imgIdx++] = imageInstance;
-				}
-
-				ISolver solver = instanceNode as ISolver;
-				if(solver != null)
-				{
-					m_SolverNodes[slvIdx++] = solver;
-				}
-			}
-
-			m_Root = m_Nodes[0];
-			foreach(ActorNode node in m_Nodes)
-			{
-				if(m_Root == node || node == null)
-				{
-					continue;
-				}
-				node.ResolveNodeIndices(m_Nodes);
-			}
-
-			// Sort the solvers.
-			if(m_SolverNodes != null)
-			{
-				Array.Sort<ISolver>(m_SolverNodes, sm_SolverComparer);
-			}
-		}
-	}*/
 }
