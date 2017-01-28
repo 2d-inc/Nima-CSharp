@@ -77,14 +77,6 @@ namespace Nima
 			}
 		}
 
-		public IEnumerable<Nima.Animation.ActorAnimation> Animations
-		{
-			get
-			{
-				return m_Animations;
-			}
-		}
-
 		public ActorNode this[int index]
 		{
 		    get

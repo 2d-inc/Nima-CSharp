@@ -68,14 +68,14 @@ namespace Nima.Math2D
 	    	return (float)Math.Sqrt(x*x + y*y);
 		}
 
-		public static void Normalize(Vec2D result, const Vec2D a)
+		public static void Normalize(Vec2D result, Vec2D a)
 		{
 			float x = a[0];
 			float y = a[1];
 			float len = x*x + y*y;
 			if (len > 0.0f) 
 			{
-				len = 1.0f / Math.Sqrt(len);
+				len = (float)(1.0 / Math.Sqrt(len));
 				result[0] = a[0] * len;
 				result[1] = a[1] * len;
 		    }
