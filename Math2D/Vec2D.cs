@@ -80,5 +80,10 @@ namespace Nima.Math2D
 				result[1] = a[1] * len;
 		    }
 		}
+
+		public static float Dot(Vec2D a, Vec2D b)
+		{
+			return a[0] * b[0] + a[1] * b[1];
+		}
 	}
 }

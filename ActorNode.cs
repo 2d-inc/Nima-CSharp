@@ -181,6 +181,14 @@ namespace Nima
 				MarkWorldDirty();
 			}
 		}
+
+		public float RenderRotation
+		{
+			get
+			{
+				return m_OverrideRotation ? m_OverrideRotationValue : m_Rotation;
+			}
+		}
 		
 		public float ScaleX
 		{
