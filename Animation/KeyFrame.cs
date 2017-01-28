@@ -422,7 +422,7 @@ namespace Nima.Animation
 			return frame;
 		}
 
-		public void TransformVertices(float[] wt)
+		public void TransformVertices(Nima.Math2D.Mat2D wt)
 		{
 			int aiVertexCount = m_Vertices.Length/2;
 			float[] fv = m_Vertices;
