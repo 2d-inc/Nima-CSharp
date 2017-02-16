@@ -317,7 +317,7 @@ namespace Nima
 				switch(animationBlock.BlockType)
 				{
 					case (int)BlockTypes.Animation:
-						Nima.Animation.ActorAnimation anim = Nima.Animation.ActorAnimation.Read(animationBlock, m_Nodes);
+						Nima.Animation.ActorAnimation anim = Nima.Animation.ActorAnimation.Read(animationBlock, m_Components);
 						m_Animations[animationIndex++] = anim;
 						//ReadAnimationBlock(actor, block);
 						break;
