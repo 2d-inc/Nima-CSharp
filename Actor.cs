@@ -58,7 +58,7 @@ namespace Nima
 			}
 		}
 
-		public IEnumerable<ActorComponent> Components
+		public IList<ActorComponent> Components
 		{
 			get
 			{
@@ -106,11 +106,11 @@ namespace Nima
 			}
 		}
 
-		public ActorNode this[int index]
+		public ActorComponent this[int index]
 		{
 		    get
 		    {
-		    	return m_Nodes[index];
+		    	return m_Components[index];
 		    }
 		}
 
