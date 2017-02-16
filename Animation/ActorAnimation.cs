@@ -526,6 +526,22 @@ namespace Nima.Animation
 				m_Loop = value;
 			}	
 		}
+
+		public float MinTime
+		{
+			get
+			{
+				return m_Min;
+			}
+		}
+
+		public float MaxTime
+		{
+			get
+			{
+				return m_Max;
+			}
+		}
 		
 		public float Time
 		{
