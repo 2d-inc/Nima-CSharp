@@ -28,7 +28,7 @@ namespace Nima.Animation
 			}
 		}
 		
-		public static PropertyAnimation Read(BlockReader reader, ActorNode node)
+		public static PropertyAnimation Read(BlockReader reader, ActorComponent component)
 		{
 			BlockReader propertyBlock = reader.ReadNextBlock();
 			if(propertyBlock == null)
@@ -45,7 +45,7 @@ namespace Nima.Animation
 			{
 				propertyAnimation.m_Type = (PropertyTypes)type;
 
-				Func<BinaryReader, ActorNode, KeyFrame> keyFrameReader = null;
+				Func<BinaryReader, ActorComponent, KeyFrame> keyFrameReader = null;
 				switch(propertyAnimation.m_Type)
 				{
 					case PropertyTypes.PosX:
@@ -86,7 +86,7 @@ namespace Nima.Animation
 				KeyFrame lastKeyFrame = null;
 				for(int i = 0; i < keyFrameCount; i++)
 				{
-					KeyFrame frame = keyFrameReader(propertyBlock, node);
+					KeyFrame frame = keyFrameReader(propertyBlock, component);
 					propertyAnimation.m_KeyFrames[i] = frame;
 					if(lastKeyFrame != null)
 					{
@@ -99,7 +99,7 @@ namespace Nima.Animation
 			return propertyAnimation;
 		}
 
-		public void Apply(float time, ActorNode node, float mix)
+		public void Apply(float time, ActorComponent component, float mix)
 		{
 			if(m_KeyFrames.Length == 0)
 			{
@@ -138,7 +138,7 @@ namespace Nima.Animation
 
 			if(idx == 0)
 			{
-				m_KeyFrames[0].Apply(node, mix);
+				m_KeyFrames[0].Apply(component, mix);
 			}
 			else
 			{
@@ -148,31 +148,31 @@ namespace Nima.Animation
 					KeyFrame toFrame = m_KeyFrames[idx];
 					if(time == toFrame.Time)
 					{
-						toFrame.Apply(node, mix);
+						toFrame.Apply(component, mix);
 					}
 					else
 					{
-						fromFrame.ApplyInterpolation(node, time, toFrame, mix);
+						fromFrame.ApplyInterpolation(component, time, toFrame, mix);
 					}
 				}
 				else
 				{
-					m_KeyFrames[idx-1].Apply(node, mix);
+					m_KeyFrames[idx-1].Apply(component, mix);
 				}
 			}
 		}
 	}
 
-	public class NodeAnimation
+	public class ComponentAnimation
 	{
-		private ushort m_NodeIndex;
+		private ushort m_ComponentIndex;
 		private PropertyAnimation[] m_Properties;
 
 		public int NodeIndex
 		{
 			get
 			{
-				return m_NodeIndex;
+				return m_ComponentIndex;
 			}
 		}
 
@@ -184,27 +184,27 @@ namespace Nima.Animation
 			}
 		}
 
-		public static NodeAnimation Read(BlockReader reader, ActorNode[] nodes)
+		public static ComponentAnimation Read(BlockReader reader, ActorComponent[] components)
 		{
-			NodeAnimation nodeAnimation = new NodeAnimation();
+			ComponentAnimation componentAnimation = new ComponentAnimation();
 
-			nodeAnimation.m_NodeIndex = reader.ReadUInt16();
+			componentAnimation.m_ComponentIndex = reader.ReadUInt16();
 			int numProperties = (int)reader.ReadUInt16();
 
-			nodeAnimation.m_Properties = new PropertyAnimation[numProperties];
+			componentAnimation.m_Properties = new PropertyAnimation[numProperties];
 			for(int i = 0; i < numProperties; i++)
 			{
-				nodeAnimation.m_Properties[i] = PropertyAnimation.Read(reader, nodes[nodeAnimation.m_NodeIndex]);
+				componentAnimation.m_Properties[i] = PropertyAnimation.Read(reader, components[componentAnimation.m_ComponentIndex]);
 			}
 
-			return nodeAnimation;
+			return componentAnimation;
 		}
 
-		public void Apply(float time, ActorNode[] nodes, float mix)
+		public void Apply(float time, ActorComponent[] components, float mix)
 		{
 			foreach(PropertyAnimation propertyAnimation in m_Properties)
 			{
-				propertyAnimation.Apply(time, nodes[m_NodeIndex], mix);
+				propertyAnimation.Apply(time, components[m_ComponentIndex], mix);
 			}
 		}
 	}
@@ -215,7 +215,7 @@ namespace Nima.Animation
 		private int m_FPS;
 		private float m_Duration;
 		private bool m_IsLooping;
-		private NodeAnimation[] m_AnimatedNodes;
+		private ComponentAnimation[] m_AnimatedComponents;
 
 		public string Name
 		{
@@ -233,23 +233,23 @@ namespace Nima.Animation
 			}
 		}
 
-		public IEnumerable<NodeAnimation> AnimatedNodes
+		public IEnumerable<ComponentAnimation> AnimatedComponents
 		{
 			get
 			{
-				return m_AnimatedNodes;
+				return m_AnimatedComponents;
 			}
 		}
 
 		public void Apply(float time, Actor actor, float mix)
 		{
-			foreach(NodeAnimation nodeAnimation in m_AnimatedNodes)
+			foreach(ComponentAnimation componentAnimation in m_AnimatedComponents)
 			{
-				nodeAnimation.Apply(time, actor.AllNodes, mix);
+				componentAnimation.Apply(time, actor.AllComponents, mix);
 			}
 		}
 
-		public static ActorAnimation Read(BlockReader reader, ActorNode[] nodes)
+		public static ActorAnimation Read(BlockReader reader, ActorComponent[] components)
 		{
 			ActorAnimation animation = new ActorAnimation();
 			animation.m_Name = Actor.ReadString(reader);
@@ -257,172 +257,14 @@ namespace Nima.Animation
 			animation.m_Duration = reader.ReadSingle();
 			animation.m_IsLooping = reader.ReadByte() != 0;
 
-			int numKeyedNodes = reader.ReadUInt16();
-			animation.m_AnimatedNodes = new NodeAnimation[numKeyedNodes];
-			for(int i = 0; i < numKeyedNodes; i++)
+			int numKeyedComponents = reader.ReadUInt16();
+			animation.m_AnimatedComponents = new ComponentAnimation[numKeyedComponents];
+			for(int i = 0; i < numKeyedComponents; i++)
 			{
-				animation.m_AnimatedNodes[i] = NodeAnimation.Read(reader, nodes);
+				animation.m_AnimatedComponents[i] = ComponentAnimation.Read(reader, components);
 			}
 
 			return animation;
 		}
-	}/*
-
-	public enum AnimationInstanceState
-	{
-		Init = 0,
-		Fading = 1,
-		In = 2,
-		Out = 3
-	};
-
-	public class AnimationInstance
-	{
-		// Position in timeline in seconds.
-		private float m_Time;
-
-		// User supplied mix value (modulated by fade).
-		private float m_Mix;
-
-		// Fade values
-		float m_FadeMix;
-		private float m_FadeMixFrom;
-		private float m_FadeMixTo;
-		private float m_FadeTime;
-		private float m_FadeDuration;
-
-		private ActorAnimation m_Animation;
-		private bool m_Loop;
-		private ActorInstance m_ActorInstance;
-		private AnimationInstanceState m_State;
-		private bool m_RemoveWhenComplete;
-
-
-		public float Time
-		{
-			get
-			{
-				return m_Time;
-			}
-		}
-
-		public float Mix
-		{
-			get
-			{
-				return m_Mix;
-			}
-			set
-			{
-				m_Mix = value;
-			}
-		}
-
-		public bool RemoveWhenComplete
-		{
-			get
-			{
-				return m_RemoveWhenComplete;
-			}
-			set
-			{
-				m_RemoveWhenComplete = value;
-			}
-		}
-
-		public AnimationInstance(ActorInstance actorInstance, ActorAnimation animation, bool loop)
-		{
-			m_RemoveWhenComplete = true;
-			m_Animation = animation;
-			m_Loop = loop;
-			m_ActorInstance = actorInstance;
-			m_Time = 0.0f;
-			m_Mix = 1.0f;
-			m_FadeMix = 1.0f;
-			// Store the init state in case FadeIn gets called before the animation advances (we want to set fade mix to 0.0f in that case).
-			m_State = AnimationInstanceState.Init;
-		}
-
-		public void FadeIn(float seconds)
-		{
-			if(m_State == AnimationInstanceState.Init)
-			{
-				m_FadeMix = 0.0f;
-			}
-			m_State = AnimationInstanceState.Fading;
-			m_FadeTime = 0.0f;
-			m_FadeDuration = seconds;
-
-			m_FadeMixFrom = m_FadeMix;
-			m_FadeMixTo = 1.0f;
-		}
-
-		public void FadeOut(float seconds)
-		{
-			m_State = AnimationInstanceState.Fading;
-			m_FadeTime = 0.0f;
-			m_FadeDuration = seconds;
-
-			m_FadeMixFrom = m_FadeMix;
-			m_FadeMixTo = 0.0f;
-		}
-
-		public void Set(float seconds)
-		{
-			m_Time = seconds;
-			if(m_Time < 0)
-			{
-				if(m_Loop)
-				{
-					m_Time += m_Animation.Duration;	
-				}
-				else
-				{
-					m_Time = 0.0f;
-				}
-			}
-			if(m_Loop && m_Time > m_Animation.Duration)
-			{
-				m_Time %= m_Animation.Duration;
-			}
-		}
-
-		public bool Advance(float seconds)
-		{
-			switch(m_State)
-			{
-				case AnimationInstanceState.Init:
-					m_State = AnimationInstanceState.In;
-					break;
-				case AnimationInstanceState.Fading:
-					m_FadeTime += seconds;
-					m_FadeMix = m_FadeMixFrom + (m_FadeMixTo - m_FadeMixFrom) * Math.Min(1.0f, m_FadeTime / m_FadeDuration);
-					if(m_FadeTime >= m_FadeDuration)
-					{
-						if(m_FadeMix == 0.0f)
-						{
-							m_State = AnimationInstanceState.Out;
-						}
-						else
-						{
-							m_State = AnimationInstanceState.In;
-						}
-					}
-					break;
-			}
-			Set(m_Time + seconds);
-			float applyMix = m_FadeMix * m_Mix;
-			if(applyMix > 0.0f)
-			{
-				m_Animation.Apply(m_Time, m_ActorInstance.AllNodes, applyMix);
-			}
-
-			if(!m_Loop && m_Time > m_Animation.Duration)
-			{
-				return true;
-			}
-
-			return m_RemoveWhenComplete && m_State == AnimationInstanceState.Out;
-		}
-	}*/
+	}
 }

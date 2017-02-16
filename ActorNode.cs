@@ -5,11 +5,8 @@ using Nima.Math2D;
 
 namespace Nima
 {
-	public class ActorNode
+	public class ActorNode : ActorComponent
 	{
-		protected string m_Name = "Unnamed Node";
-		protected ActorNode m_Parent;
-		protected Actor m_Actor;
 		protected List<ActorNode> m_Children;
 		protected List<ActorNode> m_Dependents;
 		protected Mat2D m_Transform = new Mat2D();
@@ -20,8 +17,6 @@ namespace Nima
 		protected Vec2D m_Scale = new Vec2D(1.0f, 1.0f);
 		protected float m_Opacity = 1.0f;
 		protected float m_RenderOpacity = 1.0f;
-		private ushort m_ParentIdx = 0;
-		private ushort m_Idx = 0;
 
 		private bool m_IsDirty = true;
 		private bool m_IsWorldDirty = true;
@@ -31,14 +26,15 @@ namespace Nima
 		private bool m_OverrideRotation = false;
 		private float m_OverrideRotationValue = 0.0f;
 
-		public ActorNode(Actor actor)
-		{
-			m_Actor = actor;
-		}
-
 		public ActorNode()
 		{
+
 		}
+
+		public ActorNode(Actor actor) : base(actor)
+		{
+		}
+		
 		public bool SuppressMarkDirty
 		{
 			get
@@ -64,22 +60,6 @@ namespace Nima
 			get
 			{
 				return m_IsDirty;
-			}
-		}
-
-		public Actor Actor
-		{
-			get
-			{
-				return m_Actor;
-			}
-		}
-		
-		public string Name
-		{
-			get
-			{
-				return m_Name;
 			}
 		}
 
@@ -243,34 +223,6 @@ namespace Nima
 			}
 		}
 
-		public ushort ParentIdx
-		{
-			get
-			{
-				return m_ParentIdx;
-			}
-		}
-
-		public ActorNode Parent
-		{
-			get
-			{
-				return m_Parent;
-			}
-		}
-
-		public ushort Idx
-		{
-			get
-			{
-				return m_Idx;
-			}
-			set
-			{
-				m_Idx = value;
-			}
-		}
-
 		public void MarkDirty()
 		{
 			if(m_IsDirty)
@@ -406,9 +358,7 @@ namespace Nima
 			{
 				node = new ActorNode();
 			}
-			node.m_Actor = actor;
-			node.m_Name = Actor.ReadString(reader);
-			node.m_ParentIdx = reader.ReadUInt16();
+			ActorComponent.Read(actor, reader, node);
 			Actor.ReadFloat32Array(reader, node.m_Translation.Values);
 			node.m_Rotation = reader.ReadSingle();
 			Actor.ReadFloat32Array(reader, node.m_Scale.Values);
@@ -431,12 +381,7 @@ namespace Nima
 			m_Children.Add(node);
 		}
 
-		public virtual void ResolveNodeIndices(ActorNode[] nodes)
-		{
-			nodes[m_ParentIdx].AddChild(this);
-		}
-
-		public virtual ActorNode MakeInstance(Actor resetActor)
+		public override ActorComponent MakeInstance(Actor resetActor)
 		{
 			ActorNode instanceNode = new ActorNode();
 			instanceNode.Copy(this, resetActor);
@@ -445,8 +390,7 @@ namespace Nima
 
 		public void Copy(ActorNode node, Actor resetActor)
 		{
-			m_Name = node.m_Name;
-			m_Actor = resetActor;
+			base.Copy(node, resetActor);
 			m_IsDirty = true;
 			m_IsWorldDirty = true;
 			m_Transform = new Mat2D(node.m_Transform);
@@ -456,8 +400,6 @@ namespace Nima
 			m_Rotation = node.m_Rotation;
 			m_Opacity = node.m_Opacity;
 			m_RenderOpacity = node.m_RenderOpacity;
-			m_ParentIdx = node.m_ParentIdx;
-			m_Idx = node.m_Idx;
 			m_OverrideWorldTransform = node.m_OverrideWorldTransform;
 			m_OverrideRotation = node.m_OverrideRotation;
 			m_OverrideRotationValue = node.m_OverrideRotationValue;

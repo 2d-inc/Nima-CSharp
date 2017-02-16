@@ -364,22 +364,22 @@ namespace Nima
 			return node;
 		}
 
-		public override void ResolveNodeIndices(ActorNode[] nodes)
+		public override void ResolveComponentIndices(ActorComponent[] components)
 		{
-			base.ResolveNodeIndices(nodes);
+			base.ResolveComponentIndices(components);
 			if(m_BoneConnections != null)
 			{
 				for(int i = 0; i < m_BoneConnections.Length; i++)
 				{
 					BoneConnection bc = m_BoneConnections[i];
-					bc.m_Node = nodes[bc.m_BoneIdx];
+					bc.m_Node = components[bc.m_BoneIdx] as ActorNode;
 					ActorBone bone = bc.m_Node as ActorBone;
 					bone.IsConnectedToImage = true;
 				}	
 			}
 		}
 
-		public override ActorNode MakeInstance(Actor resetActor)
+		public override ActorComponent MakeInstance(Actor resetActor)
 		{
 			ActorImage instanceNode = new ActorImage();
 			instanceNode.Copy(this, resetActor);

@@ -76,15 +76,15 @@ namespace Nima
 			return false;
 		}
 
-		public override void ResolveNodeIndices(ActorNode[] nodes)
+		public override void ResolveComponentIndices(ActorComponent[] components)
 		{
-			base.ResolveNodeIndices(nodes);
+			base.ResolveComponentIndices(components);
 			if(m_InfluencedBones != null)
 			{
 				for(int i = 0; i < m_InfluencedBones.Length; i++)
 				{
 					InfluencedBone ib = m_InfluencedBones[i];
-					ib.m_Bone = nodes[ib.m_BoneIdx] as ActorBone;
+					ib.m_Bone = components[ib.m_BoneIdx] as ActorBone;
 					if(ib.m_Bone != null)
 					{
 						ib.m_Bone.AddDependent(this);
@@ -130,7 +130,7 @@ namespace Nima
 			}
 		}
 
-		public override ActorNode MakeInstance(Actor resetActor)
+		public override ActorComponent MakeInstance(Actor resetActor)
 		{
 			ActorIKTarget instanceNode = new ActorIKTarget();
 			instanceNode.Copy(this, resetActor);

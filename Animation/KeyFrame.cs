@@ -48,8 +48,8 @@ namespace Nima.Animation
 		}
 
 		public abstract void SetNext(KeyFrame frame);
-		public abstract void ApplyInterpolation(ActorNode node, float time, KeyFrame toFrame, float mix);
-		public abstract void Apply(ActorNode node, float mix);
+		public abstract void ApplyInterpolation(ActorComponent component, float time, KeyFrame toFrame, float mix);
+		public abstract void Apply(ActorComponent component, float mix);
 	}
 
 	public abstract class KeyFrameWithInterpolation : KeyFrame
@@ -144,7 +144,7 @@ namespace Nima.Animation
 			return true;
 		}
 
-		public override void ApplyInterpolation(ActorNode node, float time, KeyFrame toFrame, float mix)
+		public override void ApplyInterpolation(ActorComponent component, float time, KeyFrame toFrame, float mix)
 		{
 			switch(m_InterpolationType)
 			{
@@ -156,14 +156,14 @@ namespace Nima.Animation
 					if(interpolator != null)
 					{
 						float v = (float)interpolator.Get((double)time);
-						SetValue(node, v, mix);
+						SetValue(component, v, mix);
 					}
 					break;
 				}
 
 				case KeyFrame.InterpolationTypes.Hold:
 				{
-					SetValue(node, m_Value, mix);
+					SetValue(component, m_Value, mix);
 					break;
 				}
 
@@ -172,23 +172,23 @@ namespace Nima.Animation
 					KeyFrameNumeric to = toFrame as KeyFrameNumeric;
 
 					float f = (time - m_Time)/(to.m_Time-m_Time);
-					SetValue(node, m_Value * (1.0f-f) + to.m_Value * f, mix);
+					SetValue(component, m_Value * (1.0f-f) + to.m_Value * f, mix);
 					break;
 				}
 			}
 		}
 		
-		public override void Apply(ActorNode node, float mix)
+		public override void Apply(ActorComponent component, float mix)
 		{
-			SetValue(node, m_Value, mix);
+			SetValue(component, m_Value, mix);
 		}
 
-		protected abstract void SetValue(ActorNode node, float value, float mix);
+		protected abstract void SetValue(ActorComponent component, float value, float mix);
 	}
 
 	public class KeyFramePosX : KeyFrameNumeric
 	{
-		public static KeyFrame Read(BinaryReader reader, ActorNode node)
+		public static KeyFrame Read(BinaryReader reader, ActorComponent component)
 		{
 			KeyFramePosX frame = new KeyFramePosX();
 			if(KeyFrameNumeric.Read(reader, frame))
@@ -198,15 +198,16 @@ namespace Nima.Animation
 			return null;
 		}
 
-		protected override void SetValue(ActorNode node, float value, float mix)
+		protected override void SetValue(ActorComponent component, float value, float mix)
 		{
+			ActorNode node = component as ActorNode;
 			node.X = node.X * (1.0f - mix) + value * mix;
 		}
 	}
 
 	public class KeyFramePosY : KeyFrameNumeric
 	{
-		public static KeyFrame Read(BinaryReader reader, ActorNode node)
+		public static KeyFrame Read(BinaryReader reader, ActorComponent component)
 		{
 			KeyFramePosY frame = new KeyFramePosY();
 			if(KeyFrameNumeric.Read(reader, frame))
@@ -216,15 +217,16 @@ namespace Nima.Animation
 			return null;
 		}
 
-		protected override void SetValue(ActorNode node, float value, float mix)
+		protected override void SetValue(ActorComponent component, float value, float mix)
 		{
+			ActorNode node = component as ActorNode;
 			node.Y = node.Y * (1.0f - mix) + value * mix;
 		}
 	}
 
 	public class KeyFrameScaleX : KeyFrameNumeric
 	{
-		public static KeyFrame Read(BinaryReader reader, ActorNode node)
+		public static KeyFrame Read(BinaryReader reader, ActorComponent component)
 		{
 			KeyFrameScaleX frame = new KeyFrameScaleX();
 			if(KeyFrameNumeric.Read(reader, frame))
@@ -234,15 +236,16 @@ namespace Nima.Animation
 			return null;
 		}
 
-		protected override void SetValue(ActorNode node, float value, float mix)
+		protected override void SetValue(ActorComponent component, float value, float mix)
 		{
+			ActorNode node = component as ActorNode;
 			node.ScaleX = node.ScaleX * (1.0f - mix) + value * mix;
 		}
 	}
 
 	public class KeyFrameScaleY : KeyFrameNumeric
 	{
-		public static KeyFrame Read(BinaryReader reader, ActorNode node)
+		public static KeyFrame Read(BinaryReader reader, ActorComponent component)
 		{
 			KeyFrameScaleY frame = new KeyFrameScaleY();
 			if(KeyFrameNumeric.Read(reader, frame))
@@ -252,15 +255,16 @@ namespace Nima.Animation
 			return null;
 		}
 
-		protected override void SetValue(ActorNode node, float value, float mix)
+		protected override void SetValue(ActorComponent component, float value, float mix)
 		{
+			ActorNode node = component as ActorNode;
 			node.ScaleY = node.ScaleY * (1.0f - mix) + value * mix;
 		}
 	}
 
 	public class KeyFrameRotation : KeyFrameNumeric
 	{
-		public static KeyFrame Read(BinaryReader reader, ActorNode node)
+		public static KeyFrame Read(BinaryReader reader, ActorComponent component)
 		{
 			KeyFrameRotation frame = new KeyFrameRotation();
 			if(KeyFrameNumeric.Read(reader, frame))
@@ -270,15 +274,16 @@ namespace Nima.Animation
 			return null;
 		}
 
-		protected override void SetValue(ActorNode node, float value, float mix)
+		protected override void SetValue(ActorComponent component, float value, float mix)
 		{
+			ActorNode node = component as ActorNode;
 			node.Rotation = node.Rotation * (1.0f - mix) + value * mix;
 		}
 	}
 
 	public class KeyFrameOpacity : KeyFrameNumeric
 	{
-		public static KeyFrame Read(BinaryReader reader, ActorNode node)
+		public static KeyFrame Read(BinaryReader reader, ActorComponent component)
 		{
 			KeyFrameOpacity frame = new KeyFrameOpacity();
 			if(KeyFrameNumeric.Read(reader, frame))
@@ -288,15 +293,16 @@ namespace Nima.Animation
 			return null;
 		}
 
-		protected override void SetValue(ActorNode node, float value, float mix)
+		protected override void SetValue(ActorComponent component, float value, float mix)
 		{
+			ActorNode node = component as ActorNode;
 			node.Opacity = node.Opacity * (1.0f - mix) + value * mix;
 		}
 	}
 
 	public class KeyFrameLength : KeyFrameNumeric
 	{
-		public static KeyFrame Read(BinaryReader reader, ActorNode node)
+		public static KeyFrame Read(BinaryReader reader, ActorComponent component)
 		{
 			KeyFrameLength frame = new KeyFrameLength();
 			if(KeyFrameNumeric.Read(reader, frame))
@@ -306,9 +312,9 @@ namespace Nima.Animation
 			return null;
 		}
 
-		protected override void SetValue(ActorNode node, float value, float mix)
+		protected override void SetValue(ActorComponent component, float value, float mix)
 		{
-			ActorBone bone = node as ActorBone;
+			ActorBone bone = component as ActorBone;
 			if(bone == null)
 			{
 				return;
@@ -319,7 +325,7 @@ namespace Nima.Animation
 
 	public class KeyFrameIKStrength : KeyFrameNumeric
 	{
-		public static KeyFrame Read(BinaryReader reader, ActorNode node)
+		public static KeyFrame Read(BinaryReader reader, ActorComponent component)
 		{
 			KeyFrameIKStrength frame = new KeyFrameIKStrength();
 			if(KeyFrameNumeric.Read(reader, frame))
@@ -329,9 +335,9 @@ namespace Nima.Animation
 			return null;
 		}
 
-		protected override void SetValue(ActorNode node, float value, float mix)
+		protected override void SetValue(ActorComponent component, float value, float mix)
 		{
-			ActorIKTarget target = node as ActorIKTarget;
+			ActorIKTarget target = component as ActorIKTarget;
 			if(target == null)
 			{
 				return;
@@ -349,7 +355,7 @@ namespace Nima.Animation
 		}
 		private DrawOrderIndex[] m_OrderedNodes;
 
-		public static KeyFrame Read(BinaryReader reader, ActorNode node)
+		public static KeyFrame Read(BinaryReader reader, ActorComponent component)
 		{
 			KeyFrameDrawOrder frame = new KeyFrameDrawOrder();
 			if(!KeyFrame.Read(reader, frame))
@@ -373,14 +379,14 @@ namespace Nima.Animation
 			// Do nothing.
 		}
 
-		public override void ApplyInterpolation(ActorNode node, float time, KeyFrame toFrame, float mix)
+		public override void ApplyInterpolation(ActorComponent component, float time, KeyFrame toFrame, float mix)
 		{
-			Apply(node, mix);
+			Apply(component, mix);
 		}
 
-		public override void Apply(ActorNode node, float mix)
+		public override void Apply(ActorComponent component, float mix)
 		{
-			Actor actor = node.Actor;
+			Actor actor = component.Actor;
 
 			foreach(DrawOrderIndex doi in m_OrderedNodes)
 			{
@@ -405,7 +411,7 @@ namespace Nima.Animation
 			}
 		}
 
-		public static KeyFrame Read(BinaryReader reader, ActorNode node)
+		public static KeyFrame Read(BinaryReader reader, ActorComponent component)
 		{
 			KeyFrameVertexDeform frame = new KeyFrameVertexDeform();
 			if(!KeyFrameWithInterpolation.Read(reader, frame))
@@ -413,7 +419,7 @@ namespace Nima.Animation
 				return null;
 			}
 
-			ActorImage imageNode = node as ActorImage;
+			ActorImage imageNode = component as ActorImage;
 			frame.m_Vertices = new float[imageNode.VertexCount * 2];
 			Actor.ReadFloat32Array(reader, frame.m_Vertices);
 			
@@ -445,9 +451,9 @@ namespace Nima.Animation
 			// Do nothing.
 		}
 
-		public override void ApplyInterpolation(ActorNode node, float time, KeyFrame toFrame, float mix)
+		public override void ApplyInterpolation(ActorComponent component, float time, KeyFrame toFrame, float mix)
 		{
-			ActorImage imageNode = node as ActorImage;
+			ActorImage imageNode = component as ActorImage;
 			float[] wr = imageNode.AnimationDeformedVertices;
 			float[] to = (toFrame as KeyFrameVertexDeform).m_Vertices;
 			int l = m_Vertices.Length;
@@ -475,9 +481,9 @@ namespace Nima.Animation
 			imageNode.IsVertexDeformDirty = true;
 		}
 		
-		public override void Apply(ActorNode node, float mix)
+		public override void Apply(ActorComponent component, float mix)
 		{
-			ActorImage imageNode = node as ActorImage;
+			ActorImage imageNode = component as ActorImage;
 			int l = m_Vertices.Length;
 			float[] wr = imageNode.AnimationDeformedVertices;
 			if(mix == 1.0f)

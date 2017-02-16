@@ -19,7 +19,7 @@ namespace Nima
 			return node;
 		}
 
-		public override ActorNode MakeInstance(Actor resetActor)
+		public override ActorComponent MakeInstance(Actor resetActor)
 		{
 			ActorRootBone instanceNode = new ActorRootBone();
 			instanceNode.Copy(this, resetActor);

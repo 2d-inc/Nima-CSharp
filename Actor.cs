@@ -10,7 +10,7 @@ namespace Nima
 		public enum BlockTypes
 		{
 			Unknown = 0,
-			Nodes = 1,
+			Components = 1,
 			ActorNode = 2,
 			ActorBone = 3,
 			ActorRootBone = 4,
@@ -32,17 +32,35 @@ namespace Nima
 
 		protected Flags m_Flags;
 		protected ActorNode m_Root;
+		protected ActorComponent[] m_Components;
 		protected ActorNode[] m_Nodes;
 		protected ActorImage[] m_ImageNodes;
-		protected ISolver[] m_SolverNodes;
+		protected ISolver[] m_Solvers;
 		protected Nima.Animation.ActorAnimation[] m_Animations;
 		protected int m_MaxTextureIndex;
 		protected int m_ImageNodeCount;
 		protected int m_SolverNodeCount;
+		protected int m_NodeCount;
 
 		public Actor()
 		{
-			m_Flags = Flags.IsImageDrawOrderDirty|Flags.IsVertexDeformDirty;
+			m_Flags = Flags.IsImageDrawOrderDirty | Flags.IsVertexDeformDirty;
+		}
+
+		public IEnumerable<ActorComponent> Components
+		{
+			get
+			{
+				return m_Components;
+			}
+		}
+
+		public ActorComponent[] AllComponents
+		{
+			get
+			{
+				return m_Components;
+			}
 		}
 
 		public IEnumerable<ActorNode> Nodes
@@ -85,11 +103,19 @@ namespace Nima
 		    }
 		}
 
+		public int ComponentCount
+		{
+			get
+			{
+				return m_Components.Length;
+			}
+		}
+
 		public int NodeCount
 		{
 			get
 			{
-				return m_Nodes.Length;
+				return m_NodeCount;
 			}
 		}
 
@@ -169,97 +195,112 @@ namespace Nima
 
 
 
-		private void ReadNodesBlock(BlockReader block)
+		private void ReadComponentsBlock(BlockReader block)
 		{
-			int nodeCount = block.ReadUInt16();
-			m_Nodes = new ActorNode[nodeCount+1];
-			m_Nodes[0] = m_Root;
+			int componentCount = block.ReadUInt16();
+			m_Components = new ActorComponent[componentCount+1];
+			m_Components[0] = m_Root;
 
 			// Guaranteed from the exporter to be in index order.
 			BlockReader nodeBlock = null;
 
-			int nodeIndex = 1;
+			int componentIndex = 1;
+			m_NodeCount = 1;
 			while((nodeBlock=block.ReadNextBlock()) != null)
 			{
-				ActorNode node = null;
+				ActorComponent component = null;
 				if(Enum.IsDefined(typeof(BlockTypes), nodeBlock.BlockType))
 				{
 					BlockTypes type = (BlockTypes)nodeBlock.BlockType;
 					switch(type)
 					{
 						case BlockTypes.ActorNode:
-							node = ActorNode.Read(this, nodeBlock);
+							component = ActorNode.Read(this, nodeBlock);
 							break;
 
 						case BlockTypes.ActorBone:
-							node = ActorBone.Read(this, nodeBlock);
+							component = ActorBone.Read(this, nodeBlock);
 							break;
 
 						case BlockTypes.ActorRootBone:
-							node = ActorRootBone.Read(this, nodeBlock);
+							component = ActorRootBone.Read(this, nodeBlock);
 							break;
 
 						case BlockTypes.ActorImage:
 							m_ImageNodeCount++;
-							node = ActorImage.Read(this, nodeBlock, makeImageNode());
-							if((node as ActorImage).TextureIndex > m_MaxTextureIndex)
+							component = ActorImage.Read(this, nodeBlock, makeImageNode());
+							if((component as ActorImage).TextureIndex > m_MaxTextureIndex)
 							{
-								m_MaxTextureIndex = (node as ActorImage).TextureIndex;
+								m_MaxTextureIndex = (component as ActorImage).TextureIndex;
 							}
 							break;
 
 						case BlockTypes.ActorIKTarget:
-							node = ActorIKTarget.Read(this, nodeBlock);
+							component = ActorIKTarget.Read(this, nodeBlock);
 							break;
 					}
 				}
-				if(node is ISolver)
+				if(component is ActorNode)
+				{
+					m_NodeCount++;
+				}
+				if(component is ISolver)
 				{
 					m_SolverNodeCount++;
 				}
 
-				m_Nodes[nodeIndex] = node;
-				if(node != null)
+				m_Components[componentIndex] = component;
+				if(component != null)
 				{
-					node.Idx = (ushort)(nodeIndex);
+					component.Idx = (ushort)(componentIndex);
 				}
-				nodeIndex++;
+				componentIndex++;
 			}
 
 			m_ImageNodes = new ActorImage[m_ImageNodeCount];
-			m_SolverNodes = new ISolver[m_SolverNodeCount];
+			m_Solvers = new ISolver[m_SolverNodeCount];
+			m_Nodes = new ActorNode[m_NodeCount];
+			m_Nodes[0] = m_Root;
 
 			// Resolve nodes.
 			int imgIdx = 0;
 			int slvIdx = 0;
-			ActorNode[] nodes = m_Nodes;
-			for(int i = 1; i <= nodeCount; i++)
+			int anIdx = 0;
+
+			ActorComponent[] components = m_Components;
+			for(int i = 1; i <= componentCount; i++)
 			{
-				ActorNode n = nodes[i];
+				ActorComponent c = components[i];
 				// Nodes can be null if we read from a file version that contained nodes that we don't interpret in this runtime.
-				if(n != null)
+				if(c != null)
 				{
-					n.ResolveNodeIndices(nodes);
+					c.ResolveComponentIndices(components);
 				}
 
-				ActorImage ain = n as ActorImage;
+				ActorImage ain = c as ActorImage;
 				if(ain != null)
 				{
 					m_ImageNodes[imgIdx++] = ain;
 				}
 
-				ISolver slv = n as ISolver;
+				ISolver slv = c as ISolver;
 				if(slv != null)
 				{
-					m_SolverNodes[slvIdx++] = slv;
+					m_Solvers[slvIdx++] = slv;
+				}
+
+				ActorNode an = c as ActorNode;
+				if(an != null)
+				{
+					m_Nodes[anIdx++] = an;
 				}
 			}
 
 
 			// Sort the solvers.
-			if(m_SolverNodes != null)
+			if(m_Solvers != null)
 			{
-				Array.Sort<ISolver>(m_SolverNodes, sm_SolverComparer);
+				Array.Sort<ISolver>(m_Solvers, sm_SolverComparer);
 			}
 		}
 
@@ -316,8 +357,8 @@ namespace Nima
 			{
 				switch(block.BlockType)
 				{
-					case (int)BlockTypes.Nodes:
-						ReadNodesBlock(block);
+					case (int)BlockTypes.Components:
+						ReadComponentsBlock(block);
 						break;
 					case (int)BlockTypes.Animations:
 						ReadAnimationsBlock(block);
@@ -373,10 +414,15 @@ namespace Nima
 			m_MaxTextureIndex = actor.m_MaxTextureIndex;
 			m_ImageNodeCount = actor.m_ImageNodeCount;
 			m_SolverNodeCount = actor.m_SolverNodeCount;
+			m_NodeCount = actor.m_NodeCount;
 
-			if(actor.NodeCount != 0)
+			if(actor.ComponentCount != 0)
 			{
-				m_Nodes = new ActorNode[actor.NodeCount];
+				m_Components = new ActorComponent[actor.ComponentCount];
+			}
+			if(m_NodeCount != 0) // This will always be at least 1.
+			{
+				m_Nodes = new ActorNode[m_NodeCount];
 			}
 			if(m_ImageNodeCount != 0)
 			{
@@ -384,53 +430,61 @@ namespace Nima
 			}
 			if(m_SolverNodeCount != 0)
 			{
-				m_SolverNodes = new ISolver[m_SolverNodeCount];
+				m_Solvers = new ISolver[m_SolverNodeCount];
 			}
 
-			if(actor.NodeCount != 0)
+			if(actor.ComponentCount != 0)
 			{
 				int idx = 0;
 				int imgIdx = 0;
 				int slvIdx = 0;
+				int ndIdx = 0;
 
-				foreach(ActorNode node in actor.Nodes)
+				foreach(ActorComponent component in actor.Components)
 				{
-					if(node == null)
+					if(component == null)
 					{
-						m_Nodes[idx++] = null;
+						m_Components[idx++] = null;
 						continue;
 					}
-					ActorNode instanceNode = node.MakeInstance(this);
-					m_Nodes[idx++] = instanceNode;
-					ActorImage imageInstance = instanceNode as ActorImage;
+					ActorComponent instanceComponent = component.MakeInstance(this);
+					m_Components[idx++] = instanceComponent;
+					ActorNode nodeInstance = instanceComponent as ActorNode;
+					if(nodeInstance != null)
+					{
+						m_Nodes[ndIdx++] = nodeInstance;
+					}
+
+					ActorImage imageInstance = instanceComponent as ActorImage;
 					if(imageInstance != null)
 					{
 						m_ImageNodes[imgIdx++] = imageInstance;
 					}
 
-					ISolver solver = instanceNode as ISolver;
+					ISolver solver = instanceComponent as ISolver;
 					if(solver != null)
 					{
-						m_SolverNodes[slvIdx++] = solver;
+						m_Solvers[slvIdx++] = solver;
 					}
 				}
 			}
 
-			m_Root = m_Nodes[0];
-			foreach(ActorNode node in m_Nodes)
+			m_Root = m_Components[0] as ActorNode;
+
+			foreach(ActorComponent component in m_Components)
 			{
-				if(m_Root == node || node == null)
+				if(m_Root == component || component == null)
 				{
 					continue;
 				}
-				node.ResolveNodeIndices(m_Nodes);
+				component.ResolveComponentIndices(m_Components);
 			}
 
 			// Is this really necessary? We sorted on load...
 			// Sort the solvers.
-			if(m_SolverNodes != null)
+			if(m_Solvers != null)
 			{
-				Array.Sort<ISolver>(m_SolverNodes, sm_SolverComparer);
+				Array.Sort<ISolver>(m_Solvers, sm_SolverComparer);
 			}
 		}
 
@@ -443,9 +497,9 @@ namespace Nima
 		public virtual void Advance(float seconds)
 		{
 			bool runSolvers = false;
-			if(m_SolverNodes != null)
+			if(m_Solvers != null)
 			{
-				foreach(ISolver solver in m_SolverNodes)
+				foreach(ISolver solver in m_Solvers)
 				{
 					if(solver.NeedsSolve)
 					{
@@ -464,19 +518,19 @@ namespace Nima
 			{
 				for(int i = 0; i < m_SolverNodeCount; i++)
 				{
-					ISolver solver = m_SolverNodes[i];
+					ISolver solver = m_Solvers[i];
 					solver.SolveStart();
 				}	
 
 				for(int i = 0; i < m_SolverNodeCount; i++)
 				{
-					ISolver solver = m_SolverNodes[i];
+					ISolver solver = m_Solvers[i];
 					solver.Solve();
 				}
 
 				for(int i = 0; i < m_SolverNodeCount; i++)
 				{
-					ISolver solver = m_SolverNodes[i];
+					ISolver solver = m_Solvers[i];
 					solver.SuppressMarkDirty = true;
 				}
 					
@@ -487,7 +541,7 @@ namespace Nima
 
 				for(int i = 0; i < m_SolverNodeCount; i++)
 				{
-					ISolver solver = m_SolverNodes[i];
+					ISolver solver = m_Solvers[i];
 					solver.SuppressMarkDirty = false;
 				}
 			}
