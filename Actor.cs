@@ -20,7 +20,8 @@ namespace Nima
 			Animations = 8,
 			Atlases = 9,
 			Atlas = 10,
-			ActorIKTarget = 11
+			ActorIKTarget = 11,
+			ActorEvent = 12
 		};
 
 		[Flags]
@@ -42,9 +43,19 @@ namespace Nima
 		protected int m_SolverNodeCount;
 		protected int m_NodeCount;
 
+        public event EventHandler<Nima.Animation.AnimationEventArgs> AnimationEvent;
+
 		public Actor()
 		{
 			m_Flags = Flags.IsImageDrawOrderDirty | Flags.IsVertexDeformDirty;
+		}
+
+		public void OnAnimationEvent(Nima.Animation.AnimationEventArgs ev)
+		{
+			if(AnimationEvent != null)
+			{
+				AnimationEvent(this, ev);
+			}
 		}
 
 		public IEnumerable<ActorComponent> Components
@@ -163,6 +174,16 @@ namespace Nima
 			return null;
 		}
 
+		public Nima.Animation.ActorAnimationInstance GetAnimationInstance(string name)
+		{
+			Nima.Animation.ActorAnimation animation = GetAnimation(name);
+			if(animation == null)
+			{
+				return null;
+			}
+			return new Nima.Animation.ActorAnimationInstance(this, animation);
+		}
+
 		public ActorNode GetNode(string name)
 		{
 			foreach(ActorNode node in m_Nodes)
@@ -237,6 +258,10 @@ namespace Nima
 
 						case BlockTypes.ActorIKTarget:
 							component = ActorIKTarget.Read(this, nodeBlock);
+							break;
+
+						case BlockTypes.ActorEvent:
+							component = ActorEvent.Read(this, nodeBlock);
 							break;
 					}
 				}

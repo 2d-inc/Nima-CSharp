@@ -14,6 +14,7 @@ namespace Nima.Animation
 		DrawOrder = 7,
 		Length = 8,
 		VertexDeform = 9,
-		IKStrength = 10
+		IKStrength = 10,
+		Trigger = 11
 	};
 }

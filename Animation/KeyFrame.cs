@@ -506,4 +506,30 @@ namespace Nima.Animation
 		}
 	}
 
+	public class KeyFrameTrigger : KeyFrame
+	{
+		public static KeyFrame Read(BinaryReader reader, ActorComponent component)
+		{
+			KeyFrameTrigger frame = new KeyFrameTrigger();
+			if(!KeyFrame.Read(reader, frame))
+			{
+				return null;
+			}
+			return frame;
+		}
+
+		public override void SetNext(KeyFrame frame)
+		{
+			// Do nothing.
+		}
+
+		public override void ApplyInterpolation(ActorComponent component, float time, KeyFrame toFrame, float mix)
+		{
+		}
+
+		public override void Apply(ActorComponent component, float mix)
+		{
+		}
+	}
+
 }

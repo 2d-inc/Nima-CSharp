@@ -20,7 +20,7 @@ namespace Nima.Animation
 			}
 		}
 
-		public IEnumerable<KeyFrame> KeyFrames
+		public IList<KeyFrame> KeyFrames
 		{
 			get
 			{
@@ -77,6 +77,9 @@ namespace Nima.Animation
 						break;
 					case PropertyTypes.IKStrength:
 						keyFrameReader = KeyFrameIKStrength.Read;
+						break;
+					case PropertyTypes.Trigger:
+						keyFrameReader = KeyFrameTrigger.Read;
 						break;
 
 				}
@@ -168,7 +171,7 @@ namespace Nima.Animation
 		private ushort m_ComponentIndex;
 		private PropertyAnimation[] m_Properties;
 
-		public int NodeIndex
+		public int ComponentIndex
 		{
 			get
 			{
@@ -204,7 +207,68 @@ namespace Nima.Animation
 		{
 			foreach(PropertyAnimation propertyAnimation in m_Properties)
 			{
-				propertyAnimation.Apply(time, components[m_ComponentIndex], mix);
+				if(propertyAnimation != null)
+				{
+					propertyAnimation.Apply(time, components[m_ComponentIndex], mix);
+				}
+			}
+		}
+	}
+
+	public class AnimationEventArgs : EventArgs
+	{
+		private string m_Name;
+		private ActorComponent m_Component;
+		private PropertyTypes m_PropertyType;
+		private float m_KeyFrameTime;
+		private float m_ElapsedTime;
+
+		public AnimationEventArgs(string name, ActorComponent component, PropertyTypes type, float keyframeTime, float elapsedTime)
+		{
+			m_Name = name;
+			m_Component = component;
+			m_PropertyType = type;
+			m_KeyFrameTime = keyframeTime;
+			m_ElapsedTime = elapsedTime;
+		}		
+
+		public string Name
+		{
+			get 
+			{
+				return m_Name;
+			}
+		}
+
+		public ActorComponent Component
+		{
+			get 
+			{
+				return m_Component;
+			}
+		}
+
+		public PropertyTypes PropertyType
+		{
+			get 
+			{
+				return m_PropertyType;
+			}
+		}
+
+		public float KeyFrameTime
+		{
+			get 
+			{
+				return m_KeyFrameTime;
+			}
+		}
+
+		public float ElapsedTime
+		{
+			get 
+			{
+				return m_ElapsedTime;
 			}
 		}
 	}
@@ -215,13 +279,22 @@ namespace Nima.Animation
 		private int m_FPS;
 		private float m_Duration;
 		private bool m_IsLooping;
-		private ComponentAnimation[] m_AnimatedComponents;
+		private ComponentAnimation[] m_Components;
+		private ComponentAnimation[] m_TriggerComponents;
 
 		public string Name
 		{
 			get
 			{
 				return m_Name;
+			}
+		}
+
+		public bool IsLooping
+		{
+			get
+			{
+				return m_IsLooping;
 			}
 		}
 
@@ -237,13 +310,109 @@ namespace Nima.Animation
 		{
 			get
 			{
-				return m_AnimatedComponents;
+				return m_Components;
+			}
+		}
+
+		//Animation.prototype.triggerEvents = function(actorComponents, fromTime, toTime, triggered)
+		/*
+									name:component._Name,
+									component:component,
+									propertyType:property._Type,
+									keyFrameTime:toTime,
+									elapsed:0*/
+		public void TriggerEvents(ActorComponent[] components, float fromTime, float toTime, IList<AnimationEventArgs> triggerEvents)
+		{
+			for(int i = 0; i < m_TriggerComponents.Length; i++)
+			{
+				ComponentAnimation keyedComponent = m_TriggerComponents[i];
+				foreach(PropertyAnimation property in keyedComponent.Properties)
+				{
+					switch(property.PropertyType)
+					{
+						case PropertyTypes.Trigger:
+							IList<KeyFrame> keyFrames = property.KeyFrames;
+
+							int kfl = keyFrames.Count;
+							if(kfl == 0)
+							{
+								continue;
+							}
+
+							int idx = 0;
+							// Binary find the keyframe index.
+							{
+								int mid = 0;
+								float element = 0.0f;
+								int start = 0;
+								int end = kfl-1;
+
+								while (start <= end) 
+								{
+							    	mid = ((start + end) >> 1);
+									element = keyFrames[mid].Time;
+									if (element < toTime) 
+									{
+										start = mid + 1;
+									} 
+									else if (element > toTime) 
+									{
+										end = mid - 1;
+									} 
+									else 
+									{
+										start = mid;
+										break;
+									}
+								}
+
+								idx = start;
+							}
+
+							//int idx = keyFrameLocation(toTime, keyFrames, 0, keyFrames.length-1);
+							if(idx == 0)
+							{
+								if(kfl > 0 && keyFrames[0].Time == toTime)
+								{
+									ActorComponent component = components[keyedComponent.ComponentIndex];
+									triggerEvents.Add(new AnimationEventArgs(component.Name, component, property.PropertyType, toTime, 0.0f));
+								}
+							}
+							else
+							{
+								for(int k = idx-1; k >= 0; k--)
+								{
+									KeyFrame frame = keyFrames[k];	
+
+									if(frame.Time > fromTime)
+									{
+										ActorComponent component = components[keyedComponent.ComponentIndex];
+										triggerEvents.Add(new AnimationEventArgs(component.Name, component, property.PropertyType, frame.Time, toTime-frame.Time));
+										/*triggered.push({
+											name:component._Name,
+											component:component,
+											propertyType:property._Type,
+											keyFrameTime:frame._Time,
+											elapsed:toTime-frame._Time
+										});*/
+									}
+									else
+									{
+										break;
+									}
+								}
+							}
+							break;
+						default:
+							break;
+					}
+				}
 			}
 		}
 
 		public void Apply(float time, Actor actor, float mix)
 		{
-			foreach(ComponentAnimation componentAnimation in m_AnimatedComponents)
+			foreach(ComponentAnimation componentAnimation in m_Components)
 			{
 				componentAnimation.Apply(time, actor.AllComponents, mix);
 			}
@@ -258,13 +427,210 @@ namespace Nima.Animation
 			animation.m_IsLooping = reader.ReadByte() != 0;
 
 			int numKeyedComponents = reader.ReadUInt16();
-			animation.m_AnimatedComponents = new ComponentAnimation[numKeyedComponents];
+			//animation.m_Components = new ComponentAnimation[numKeyedComponents];
+
+			// We distinguish between animated and triggered components as ActorEvents are currently only used to trigger events and don't need
+			// the full animation cycle. This lets them optimize them out of the regular animation cycle.
+			int animatedComponentCount = 0;
+			int triggerComponentCount = 0;
+
+			ComponentAnimation[] animatedComponents = new ComponentAnimation[numKeyedComponents];
 			for(int i = 0; i < numKeyedComponents; i++)
 			{
-				animation.m_AnimatedComponents[i] = ComponentAnimation.Read(reader, components);
+				ComponentAnimation componentAnimation = ComponentAnimation.Read(reader, components);
+				animatedComponents[i] = componentAnimation;
+				if(componentAnimation != null)
+				{
+					ActorComponent actorComponent = components[componentAnimation.ComponentIndex];
+					if(actorComponent != null)
+					{
+						if(actorComponent is ActorEvent)
+						{
+							triggerComponentCount++;
+						}
+						else
+						{
+							animatedComponentCount++;
+						}
+					}
+				}
+			}
+
+			if(animatedComponentCount != 0)
+			{
+				animation.m_Components = new ComponentAnimation[animatedComponentCount];
+			}
+			if(triggerComponentCount != 0)
+			{
+				animation.m_TriggerComponents = new ComponentAnimation[triggerComponentCount];
+			}
+
+			// Put them in their respective lists.
+			int animatedComponentIndex = 0;
+			int triggerComponentIndex = 0;
+			for(int i = 0; i < numKeyedComponents; i++)
+			{
+				ComponentAnimation componentAnimation = animatedComponents[i];
+				if(componentAnimation != null)
+				{
+					ActorComponent actorComponent = components[componentAnimation.ComponentIndex];
+					if(actorComponent != null)
+					{
+						if(actorComponent is ActorEvent)
+						{
+							animation.m_TriggerComponents[triggerComponentIndex++] = componentAnimation;
+						}
+						else
+						{
+							animation.m_Components[animatedComponentIndex++] = componentAnimation;
+						}
+					}
+				}
 			}
 
 			return animation;
+		}
+	}
+
+	public class ActorAnimationInstance
+	{
+		private Actor m_Actor;
+		private ActorAnimation m_Animation;
+		private float m_Time;
+		private float m_Min;
+		private float m_Max;
+		private float m_Range;
+		private bool m_Loop;
+
+        public event EventHandler<AnimationEventArgs> AnimationEvent;
+
+		public ActorAnimationInstance(Actor actor, ActorAnimation animation)
+		{
+			m_Actor = actor;
+			m_Animation = animation;
+			m_Time = 0.0f;
+			m_Min = 0.0f;
+			m_Max = animation.Duration;
+			m_Range = m_Max - m_Min;
+			m_Loop = animation.IsLooping;
+		}	
+
+		public bool Loop
+		{
+			get
+			{
+				return m_Loop;
+			}
+			set
+			{
+				m_Loop = value;
+			}	
+		}
+		
+		public float Time
+		{
+			get
+			{
+				return m_Time;
+			}
+			set
+			{
+				float delta = value - m_Time;
+				float time = m_Time + (delta % m_Range);
+
+				if(time < m_Min)
+				{
+					if(m_Loop)
+					{
+						time = m_Max - (m_Min - time);	
+					}
+					else
+					{
+						time = m_Min;
+					}
+				}
+				else if(time > m_Max)
+				{
+					if(m_Loop)
+					{
+						time = m_Min + (time - m_Max);
+					}
+					else
+					{
+						time = m_Max;
+					}
+				}
+				m_Time = time;
+			}	
+		}
+		public void Advance(float seconds)
+		{
+			IList<AnimationEventArgs> triggeredEvents = new List<AnimationEventArgs>();
+			float time = m_Time;
+			time += seconds % m_Range;
+			if(time < m_Min)
+			{
+				if(m_Loop)
+				{
+					m_Animation.TriggerEvents(m_Actor.AllComponents, time, m_Time, triggeredEvents);
+					time = m_Max - (m_Min - time);
+					m_Animation.TriggerEvents(m_Actor.AllComponents, time, m_Max, triggeredEvents);
+				}
+				else
+				{
+					time = m_Min;
+					if(m_Time != time)
+					{
+						m_Animation.TriggerEvents(m_Actor.AllComponents, m_Min, m_Time, triggeredEvents);
+					}
+				}
+			}
+			else if(time > m_Max)
+			{
+				if(m_Loop)
+				{
+					m_Animation.TriggerEvents(m_Actor.AllComponents, time, m_Time, triggeredEvents);
+					time = m_Min + (time - m_Max);
+					m_Animation.TriggerEvents(m_Actor.AllComponents, m_Min-0.001f, time, triggeredEvents);
+				}
+				else
+				{
+					time = m_Max;
+					if(m_Time != time)
+					{
+						m_Animation.TriggerEvents(m_Actor.AllComponents, m_Time, m_Max, triggeredEvents);
+					}
+				}
+			}
+			else if(time > m_Time)
+			{
+				m_Animation.TriggerEvents(m_Actor.AllComponents, m_Time, time, triggeredEvents);
+			}
+			else
+			{
+				m_Animation.TriggerEvents(m_Actor.AllComponents, time, m_Time, triggeredEvents);
+			}
+
+			foreach(AnimationEventArgs ev in triggeredEvents)
+			{
+	            if (AnimationEvent != null)
+	            {
+	                AnimationEvent(this, ev);
+	            }
+	            m_Actor.OnAnimationEvent(ev);
+			}
+			/*for(var i = 0; i < triggeredEvents.length; i++)
+			{
+				var event = triggeredEvents[i];
+				this.dispatch("animationEvent", event);
+				m_Actor.dispatch("animationEvent", event);
+			}*/
+			m_Time = time;
+		}
+
+		public void Apply(float mix)
+		{
+			m_Animation.Apply(m_Time, m_Actor, mix);
 		}
 	}
 }
