@@ -12,7 +12,9 @@ namespace Nima
 		protected Actor m_Actor;
 		private ushort m_ParentIdx = 0;
 		private ushort m_Idx = 0;
-		private List<CustomProperty> m_CustomProperties;
+		private List<CustomIntProperty> m_CustomIntProperties;
+		private List<CustomFloatProperty> m_CustomFloatProperties;
+		private List<CustomStringProperty> m_CustomStringProperties;
 
 		public ActorComponent(Actor actor)
 		{
@@ -67,22 +69,72 @@ namespace Nima
 			}
 		}
 
-		public void AddCustomProperty(CustomProperty property)
+		public void AddCustomIntProperty(CustomIntProperty property)
 		{
-			if(m_CustomProperties == null)
+			if(m_CustomIntProperties == null)
 			{
-				m_CustomProperties = new List<CustomProperty>();
+				m_CustomIntProperties = new List<CustomIntProperty>();
 			}
-			m_CustomProperties.Add(property);
+			m_CustomIntProperties.Add(property);
 		}
 
-		public CustomProperty GetCustomProperty(string name)
+		public void AddCustomFloatProperty(CustomFloatProperty property)
 		{
-			if(m_CustomProperties == null)
+			if(m_CustomFloatProperties == null)
+			{
+				m_CustomFloatProperties = new List<CustomFloatProperty>();
+			}
+			m_CustomFloatProperties.Add(property);
+		}
+
+		public void AddCustomStringProperty(CustomStringProperty property)
+		{
+			if(m_CustomStringProperties == null)
+			{
+				m_CustomStringProperties = new List<CustomStringProperty>();
+			}
+			m_CustomStringProperties.Add(property);
+		}
+
+		public CustomIntProperty GetCustomIntProperty(string name)
+		{
+			if(m_CustomIntProperties == null)
 			{
 				return null;
 			}
-			foreach(CustomProperty prop in m_CustomProperties)
+			foreach(CustomIntProperty prop in m_CustomIntProperties)
+			{
+				if(prop.Name == name)
+				{
+					return prop;
+				}
+			}
+			return null;
+		}
+
+		public CustomFloatProperty GetCustomFloatProperty(string name)
+		{
+			if(m_CustomFloatProperties == null)
+			{
+				return null;
+			}
+			foreach(CustomFloatProperty prop in m_CustomFloatProperties)
+			{
+				if(prop.Name == name)
+				{
+					return prop;
+				}
+			}
+			return null;
+		}
+
+		public CustomStringProperty GetCustomStringProperty(string name)
+		{
+			if(m_CustomStringProperties == null)
+			{
+				return null;
+			}
+			foreach(CustomStringProperty prop in m_CustomStringProperties)
 			{
 				if(prop.Name == name)
 				{

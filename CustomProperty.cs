@@ -5,80 +5,7 @@ using Nima.Math2D;
 
 namespace Nima
 {
-	public enum CustomPropertyType
-	{
-		Integer = 0,
-		Float = 1,
-		String = 2
-	};
-
-	public abstract class CustomProperty : ActorComponent
-	{
-		protected CustomPropertyType m_PropertyType;
-
-		public CustomPropertyType PropertyType
-		{
-			get
-			{
-				return m_PropertyType;
-			}
-		}
-
-		public void Copy(CustomProperty prop, Actor resetActor)
-		{
-			base.Copy(prop, resetActor);
-			m_PropertyType = prop.m_PropertyType;
-		}
-
-		public override void ResolveComponentIndices(ActorComponent[] components)
-		{
-			base.ResolveComponentIndices(components);
-			ActorComponent component = components[ParentIdx];
-			if(component != null)
-			{
-				component.AddCustomProperty(this);
-			}
-		}
-
-		public float FloatValue
-		{
-			get
-			{
-				CustomFloatProperty f = this as CustomFloatProperty;
-				if(f != null)
-				{
-					return f.Value;
-				}
-				return 0.0f;
-			}
-		}
-		public string StringValue
-		{
-			get
-			{
-				CustomStringProperty f = this as CustomStringProperty;
-				if(f != null)
-				{
-					return f.Value;
-				}
-				return "";
-			}
-		}
-		public int IntValue
-		{
-			get
-			{
-				CustomIntProperty f = this as CustomIntProperty;
-				if(f != null)
-				{
-					return f.Value;
-				}
-				return 0;
-			}
-		}
-	}
-
-	public class CustomIntProperty : CustomProperty
+	public class CustomIntProperty : ActorComponent
 	{
 		protected int m_Value;
 
@@ -101,7 +28,6 @@ namespace Nima
 				property = new CustomIntProperty();
 			}
 			ActorComponent.Read(actor, reader, property);
-			property.m_PropertyType = CustomPropertyType.Integer;
 			property.Value = reader.ReadInt32();
 			return property;
 		}
@@ -118,9 +44,18 @@ namespace Nima
 			base.Copy(prop, resetActor);
 			m_Value = prop.m_Value;
 		}
+
+		public override void ResolveComponentIndices(ActorComponent[] components)
+		{
+			ActorComponent component = components[ParentIdx];
+			if(component != null)
+			{
+				component.AddCustomIntProperty(this);
+			}
+		}
 	}
 
-	public class CustomFloatProperty : CustomProperty
+	public class CustomFloatProperty : ActorComponent
 	{
 		float m_Value;
 
@@ -143,7 +78,6 @@ namespace Nima
 				property = new CustomFloatProperty();
 			}
 			ActorComponent.Read(actor, reader, property);
-			property.m_PropertyType = CustomPropertyType.Float;
 			property.Value = reader.ReadSingle();
 			return property;
 		}
@@ -160,9 +94,18 @@ namespace Nima
 			base.Copy(prop, resetActor);
 			m_Value = prop.m_Value;
 		}
+
+		public override void ResolveComponentIndices(ActorComponent[] components)
+		{
+			ActorComponent component = components[ParentIdx];
+			if(component != null)
+			{
+				component.AddCustomFloatProperty(this);
+			}
+		}
 	}
 
-	public class CustomStringProperty : CustomProperty
+	public class CustomStringProperty : ActorComponent
 	{
 		string m_Value;
 
@@ -185,7 +128,6 @@ namespace Nima
 				property = new CustomStringProperty();
 			}
 			ActorComponent.Read(actor, reader, property);
-			property.m_PropertyType = CustomPropertyType.String;
 			property.Value = Actor.ReadString(reader);
 			return property;
 		}
@@ -201,6 +143,15 @@ namespace Nima
 		{
 			base.Copy(prop, resetActor);
 			m_Value = prop.m_Value;
+		}
+
+		public override void ResolveComponentIndices(ActorComponent[] components)
+		{
+			ActorComponent component = components[ParentIdx];
+			if(component != null)
+			{
+				component.AddCustomStringProperty(this);
+			}
 		}
 	}
 }
