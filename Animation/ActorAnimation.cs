@@ -81,6 +81,15 @@ namespace Nima.Animation
 					case PropertyTypes.Trigger:
 						keyFrameReader = KeyFrameTrigger.Read;
 						break;
+					case PropertyTypes.IntProperty:
+						keyFrameReader = KeyFrameIntProperty.Read;
+						break;
+					case PropertyTypes.FloatProperty:
+						keyFrameReader = KeyFrameFloatProperty.Read;
+						break;
+					case PropertyTypes.StringProperty:
+						keyFrameReader = KeyFrameStringProperty.Read;
+						break;
 
 				}
 

@@ -12,6 +12,7 @@ namespace Nima
 		protected Actor m_Actor;
 		private ushort m_ParentIdx = 0;
 		private ushort m_Idx = 0;
+		private List<CustomProperty> m_CustomProperties;
 
 		public ActorComponent(Actor actor)
 		{
@@ -64,6 +65,31 @@ namespace Nima
 			{
 				m_Idx = value;
 			}
+		}
+
+		public void AddCustomProperty(CustomProperty property)
+		{
+			if(m_CustomProperties == null)
+			{
+				m_CustomProperties = new List<CustomProperty>();
+			}
+			m_CustomProperties.Add(property);
+		}
+
+		public CustomProperty GetCustomProperty(string name)
+		{
+			if(m_CustomProperties == null)
+			{
+				return null;
+			}
+			foreach(CustomProperty prop in m_CustomProperties)
+			{
+				if(prop.Name == name)
+				{
+					return prop;
+				}
+			}
+			return null;
 		}
 
 		public static ActorComponent Read(Actor actor, BinaryReader reader, ActorComponent component = null)

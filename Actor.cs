@@ -1,7 +1,6 @@
 using System;
 using System.IO;
 using System.Collections.Generic;
-//using System.Diagnostics;
 
 namespace Nima
 {
@@ -21,7 +20,10 @@ namespace Nima
 			Atlases = 9,
 			Atlas = 10,
 			ActorIKTarget = 11,
-			ActorEvent = 12
+			ActorEvent = 12,
+			CustomIntProperty = 13,
+			CustomFloatProperty = 14,
+			CustomStringProperty = 15
 		};
 
 		[Flags]
@@ -262,6 +264,18 @@ namespace Nima
 
 						case BlockTypes.ActorEvent:
 							component = ActorEvent.Read(this, nodeBlock);
+							break;
+
+						case BlockTypes.CustomIntProperty:
+							component = CustomIntProperty.Read(this, nodeBlock);
+							break;
+
+						case BlockTypes.CustomFloatProperty:
+							component = CustomFloatProperty.Read(this, nodeBlock);
+							break;
+
+						case BlockTypes.CustomStringProperty:
+							component = CustomStringProperty.Read(this, nodeBlock);
 							break;
 					}
 				}

@@ -186,6 +186,139 @@ namespace Nima.Animation
 		protected abstract void SetValue(ActorComponent component, float value, float mix);
 	}
 
+	public abstract class KeyFrameInt : KeyFrameWithInterpolation
+	{
+		private int m_Value;
+
+		public int Value
+		{
+			get
+			{
+				return m_Value;
+			}
+		}
+
+		public static bool Read(BinaryReader reader, KeyFrameInt frame)
+		{
+			if(!KeyFrameWithInterpolation.Read(reader, frame))
+			{
+				return false;
+			}
+			frame.m_Value = reader.ReadInt32();
+			return true;
+		}
+
+		public override void ApplyInterpolation(ActorComponent component, float time, KeyFrame toFrame, float mix)
+		{
+			switch(m_InterpolationType)
+			{
+				case KeyFrame.InterpolationTypes.Mirrored:
+				case KeyFrame.InterpolationTypes.Asymmetric:
+				case KeyFrame.InterpolationTypes.Disconnected:
+				{
+					ValueTimeCurveInterpolator interpolator = m_Interpolator as ValueTimeCurveInterpolator;
+					if(interpolator != null)
+					{
+						float v = (float)interpolator.Get((double)time);
+						SetValue(component, v, mix);
+					}
+					break;
+				}
+
+				case KeyFrame.InterpolationTypes.Hold:
+				{
+					SetValue(component, m_Value, mix);
+					break;
+				}
+
+				case KeyFrame.InterpolationTypes.Linear:
+				{
+					KeyFrameInt to = toFrame as KeyFrameInt;
+
+					float f = (time - m_Time)/(to.m_Time-m_Time);
+					SetValue(component, m_Value * (1.0f-f) + to.m_Value * f, mix);
+					break;
+				}
+			}
+		}
+		
+		public override void Apply(ActorComponent component, float mix)
+		{
+			SetValue(component, m_Value, mix);
+		}
+
+		protected abstract void SetValue(ActorComponent component, float value, float mix);
+	}
+
+	public class KeyFrameIntProperty : KeyFrameInt
+	{
+		public static KeyFrame Read(BinaryReader reader, ActorComponent component)
+		{
+			KeyFrameIntProperty frame = new KeyFrameIntProperty();
+			if(KeyFrameInt.Read(reader, frame))
+			{
+				return frame;
+			}
+			return null;
+		}
+
+		protected override void SetValue(ActorComponent component, float value, float mix)
+		{
+			CustomIntProperty node = component as CustomIntProperty;
+			node.Value = (int)Math.Round(node.Value * (1.0f - mix) + value * mix);
+		}
+	}
+
+	public class KeyFrameFloatProperty : KeyFrameNumeric
+	{
+		public static KeyFrame Read(BinaryReader reader, ActorComponent component)
+		{
+			KeyFrameFloatProperty frame = new KeyFrameFloatProperty();
+			if(KeyFrameNumeric.Read(reader, frame))
+			{
+				return frame;
+			}
+			return null;
+		}
+
+		protected override void SetValue(ActorComponent component, float value, float mix)
+		{
+			CustomFloatProperty node = component as CustomFloatProperty;
+			node.Value = node.Value * (1.0f - mix) + value * mix;
+		}
+	}
+
+	public class KeyFrameStringProperty : KeyFrame
+	{
+		string m_Value;
+		public static KeyFrame Read(BinaryReader reader, ActorComponent component)
+		{
+			KeyFrameStringProperty frame = new KeyFrameStringProperty();
+			if(!KeyFrame.Read(reader, frame))
+			{
+				return null;
+			}
+			frame.m_Value = Actor.ReadString(reader);
+			return frame;
+		}
+
+		public override void SetNext(KeyFrame frame)
+		{
+			// Do nothing.
+		}
+
+		public override void ApplyInterpolation(ActorComponent component, float time, KeyFrame toFrame, float mix)
+		{
+			Apply(component, mix);
+		}
+
+		public override void Apply(ActorComponent component, float mix)
+		{
+			CustomStringProperty prop = component as CustomStringProperty;
+			prop.Value = m_Value;
+		}
+	}
+
 	public class KeyFramePosX : KeyFrameNumeric
 	{
 		public static KeyFrame Read(BinaryReader reader, ActorComponent component)

@@ -15,6 +15,9 @@ namespace Nima.Animation
 		Length = 8,
 		VertexDeform = 9,
 		IKStrength = 10,
-		Trigger = 11
+		Trigger = 11,
+		IntProperty = 12,
+		FloatProperty = 13,
+		StringProperty = 14
 	};
 }
