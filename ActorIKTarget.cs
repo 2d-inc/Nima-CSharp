@@ -184,7 +184,7 @@ namespace Nima
 
 		public void SolveStart()
 		{
-			if(m_Bone1 == null)
+			if(m_Bone1 == null || m_Bone1Child == null)
 			{
 				return;
 			}
