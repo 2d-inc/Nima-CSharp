@@ -90,6 +90,9 @@ namespace Nima.Animation
 					case PropertyTypes.StringProperty:
 						keyFrameReader = KeyFrameStringProperty.Read;
 						break;
+					case PropertyTypes.BooleanProperty:
+						keyFrameReader = KeyFrameBooleanProperty.Read;
+						break;
 
 				}
 

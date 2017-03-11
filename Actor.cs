@@ -23,7 +23,12 @@ namespace Nima
 			ActorEvent = 12,
 			CustomIntProperty = 13,
 			CustomFloatProperty = 14,
-			CustomStringProperty = 15
+			CustomStringProperty = 15,
+			CustomBooleanProperty = 16,
+			ColliderRectangle = 17,
+			ColliderTriangle = 18,
+			ColliderCircle = 19,
+			ColliderPolygon = 20
 		};
 
 		[Flags]
@@ -276,6 +281,10 @@ namespace Nima
 
 						case BlockTypes.CustomStringProperty:
 							component = CustomStringProperty.Read(this, nodeBlock);
+							break;
+
+						case BlockTypes.CustomBooleanProperty:
+							component = CustomBooleanProperty.Read(this, nodeBlock);
 							break;
 					}
 				}

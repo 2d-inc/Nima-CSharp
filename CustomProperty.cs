@@ -154,4 +154,54 @@ namespace Nima
 			}
 		}
 	}
+
+	public class CustomBooleanProperty : ActorComponent
+	{
+		bool m_Value;
+
+		public bool Value
+		{
+			get
+			{
+				return m_Value;
+			}
+			set
+			{
+				m_Value = value;
+			}
+		}
+
+		public static CustomBooleanProperty Read(Actor actor, BinaryReader reader, CustomBooleanProperty property = null)
+		{
+			if(property == null)
+			{
+				property = new CustomBooleanProperty();
+			}
+			ActorComponent.Read(actor, reader, property);
+			property.Value = reader.ReadByte() == 1;
+			return property;
+		}
+
+		public override ActorComponent MakeInstance(Actor resetActor)
+		{
+			CustomBooleanProperty instanceProperty = new CustomBooleanProperty();
+			instanceProperty.Copy(this, resetActor);
+			return instanceProperty;
+		}
+
+		public void Copy(CustomBooleanProperty prop, Actor resetActor)
+		{
+			base.Copy(prop, resetActor);
+			m_Value = prop.m_Value;
+		}
+
+		public override void ResolveComponentIndices(ActorComponent[] components)
+		{
+			ActorComponent component = components[ParentIdx];
+			if(component != null)
+			{
+				component.AddCustomBooleanProperty(this);
+			}
+		}
+	}
 }

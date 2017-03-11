@@ -15,6 +15,7 @@ namespace Nima
 		private List<CustomIntProperty> m_CustomIntProperties;
 		private List<CustomFloatProperty> m_CustomFloatProperties;
 		private List<CustomStringProperty> m_CustomStringProperties;
+		private List<CustomBooleanProperty> m_CustomBooleanProperties;
 
 		public ActorComponent(Actor actor)
 		{
@@ -96,6 +97,15 @@ namespace Nima
 			m_CustomStringProperties.Add(property);
 		}
 
+		public void AddCustomBooleanProperty(CustomBooleanProperty property)
+		{
+			if(m_CustomBooleanProperties == null)
+			{
+				m_CustomBooleanProperties = new List<CustomBooleanProperty>();
+			}
+			m_CustomBooleanProperties.Add(property);
+		}
+
 		public CustomIntProperty GetCustomIntProperty(string name)
 		{
 			if(m_CustomIntProperties == null)
@@ -135,6 +145,22 @@ namespace Nima
 				return null;
 			}
 			foreach(CustomStringProperty prop in m_CustomStringProperties)
+			{
+				if(prop.Name == name)
+				{
+					return prop;
+				}
+			}
+			return null;
+		}
+
+		public CustomBooleanProperty GetCustomBooleanProperty(string name)
+		{
+			if(m_CustomBooleanProperties == null)
+			{
+				return null;
+			}
+			foreach(CustomBooleanProperty prop in m_CustomBooleanProperties)
 			{
 				if(prop.Name == name)
 				{
