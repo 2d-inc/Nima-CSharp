@@ -25,10 +25,10 @@ namespace Nima
 			CustomFloatProperty = 14,
 			CustomStringProperty = 15,
 			CustomBooleanProperty = 16,
-			ColliderRectangle = 17,
-			ColliderTriangle = 18,
-			ColliderCircle = 19,
-			ColliderPolygon = 20
+			ActorColliderRectangle = 17,
+			ActorColliderTriangle = 18,
+			ActorColliderCircle = 19,
+			ActorColliderPolygon = 20
 		};
 
 		[Flags]
@@ -285,6 +285,19 @@ namespace Nima
 
 						case BlockTypes.CustomBooleanProperty:
 							component = CustomBooleanProperty.Read(this, nodeBlock);
+							break;
+
+						case BlockTypes.ActorColliderRectangle:
+							component = ActorColliderRectangle.Read(this, nodeBlock);
+							break;
+						case BlockTypes.ActorColliderTriangle:
+							component = ActorColliderTriangle.Read(this, nodeBlock);
+							break;
+						case BlockTypes.ActorColliderCircle:
+							component = ActorColliderCircle.Read(this, nodeBlock);
+							break;
+						case BlockTypes.ActorColliderPolygon:
+							component = ActorColliderPolygon.Read(this, nodeBlock);
 							break;
 					}
 				}
