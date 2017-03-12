@@ -5,7 +5,7 @@ using Nima.Math2D;
 
 namespace Nima
 {
-	public abstract class ActorCollider : ActorComponent
+	public abstract class ActorCollider : ActorNode
 	{
 		protected bool m_IsCollisionEnabled = true;
 
@@ -23,7 +23,7 @@ namespace Nima
 
 		public static ActorCollider Read(Actor actor, BinaryReader reader, ActorCollider property)
 		{
-			ActorComponent.Read(actor, reader, property);
+			ActorNode.Read(actor, reader, property);
 			property.IsCollisionEnabled = reader.ReadByte() == 1;
 			return property;
 		}
@@ -151,7 +151,7 @@ namespace Nima
 	{
 		private float m_Radius;
 
-		public float Width
+		public float Radius
 		{
 			get
 			{

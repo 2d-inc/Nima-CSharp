@@ -93,6 +93,9 @@ namespace Nima.Animation
 					case PropertyTypes.BooleanProperty:
 						keyFrameReader = KeyFrameBooleanProperty.Read;
 						break;
+					case PropertyTypes.CollisionEnabled:
+						keyFrameReader = KeyFrameCollisionEnabledProperty.Read;
+						break;
 
 				}
 

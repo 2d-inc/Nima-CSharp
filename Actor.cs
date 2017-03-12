@@ -1,6 +1,9 @@
 using System;
 using System.IO;
 using System.Collections.Generic;
+#if UNITY_EDITOR
+using UnityEngine;
+#endif
 
 namespace Nima
 {

@@ -19,7 +19,7 @@ namespace Nima.Animation
 		IntProperty = 12,
 		FloatProperty = 13,
 		StringProperty = 14,
-		BooleanProperty = 15/*,
-		CollisionEnabled = 16*/
+		BooleanProperty = 15,
+		CollisionEnabled = 16
 	};
 }

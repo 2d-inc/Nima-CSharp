@@ -321,7 +321,7 @@ namespace Nima.Animation
 
 	public class KeyFrameBooleanProperty : KeyFrame
 	{
-		bool m_Value;
+		private bool m_Value;
 		public static KeyFrame Read(BinaryReader reader, ActorComponent component)
 		{
 			KeyFrameBooleanProperty frame = new KeyFrameBooleanProperty();
@@ -349,6 +349,38 @@ namespace Nima.Animation
 			prop.Value = m_Value;
 		}
 	}
+
+	public class KeyFrameCollisionEnabledProperty : KeyFrame
+	{
+		private bool m_Value;
+		public static KeyFrame Read(BinaryReader reader, ActorComponent component)
+		{
+			KeyFrameCollisionEnabledProperty frame = new KeyFrameCollisionEnabledProperty();
+			if(!KeyFrame.Read(reader, frame))
+			{
+				return null;
+			}
+			frame.m_Value = reader.ReadByte() == 1;
+			return frame;
+		}
+
+		public override void SetNext(KeyFrame frame)
+		{
+			// Do nothing.
+		}
+
+		public override void ApplyInterpolation(ActorComponent component, float time, KeyFrame toFrame, float mix)
+		{
+			Apply(component, mix);
+		}
+
+		public override void Apply(ActorComponent component, float mix)
+		{
+			ActorCollider collider = component as ActorCollider;
+			collider.IsCollisionEnabled = m_Value;
+		}
+	}
+
 
 	public class KeyFramePosX : KeyFrameNumeric
 	{
