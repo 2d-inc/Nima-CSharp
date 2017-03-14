@@ -416,14 +416,25 @@ namespace Nima
 			}
 		}
 
+		public void TransformBind(Mat2D xform)
+		{
+			if(m_BoneConnections != null)
+			{
+				foreach(BoneConnection bc in m_BoneConnections)
+				{
+					Mat2D.Multiply(bc.m_Bind, xform, bc.m_Bind);
+					Mat2D.Invert(bc.m_InverseBind, bc.m_Bind);
+				}
+			}
+		}
+
 		public float[] MakeVertexPositionBuffer()
 		{
 			return new float[m_VertexCount * 2];
 		}
 
-		public void UpdateVertexPositionBuffer(float[] buffer)
+		public void UpdateVertexPositionBuffer(float[] buffer, bool isSkinnedDeformInWorld = true)
 		{
-			Vec2D tempVec = new Vec2D();
 			Mat2D worldTransform = this.WorldTransform;
 			int readIdx = 0;
 			int writeIdx = 0;
@@ -431,15 +442,70 @@ namespace Nima
 			float[] v = m_AnimationDeformedVertices != null ? m_AnimationDeformedVertices : m_Vertices;
 			int stride = m_AnimationDeformedVertices != null ? 2 : VertexStride;
 			
-			for(int i = 0; i < m_VertexCount; i++)
+			if(IsSkinned)
 			{
-				tempVec[0] = v[readIdx];
-				tempVec[1] = v[readIdx+1];
-				Vec2D.TransformMat2D(tempVec, tempVec, worldTransform);
-				readIdx += stride;
+				float[] boneTransforms = this.BoneInfluenceMatrices;
 
-				buffer[writeIdx++] = tempVec[0];
-				buffer[writeIdx++] = tempVec[1];
+				//Mat2D inverseWorldTransform = Mat2D.Invert(new Mat2D(), worldTransform);
+				float[] influenceMatrix = new float[6]{0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f};
+				int boneIndexOffset = VertexBoneIndexOffset;
+				int weightOffset = VertexBoneWeightOffset;
+				for(int i = 0; i < m_VertexCount; i++)
+				{
+					float x = v[readIdx];
+					float y = v[readIdx+1];
+
+					float px, py;
+
+					if(m_AnimationDeformedVertices != null && isSkinnedDeformInWorld)
+					{
+						px = x;
+						py = y;
+					}
+					else
+					{
+						px = worldTransform[0] * x + worldTransform[2] * y + worldTransform[4];
+						py = worldTransform[1] * x + worldTransform[3] * y + worldTransform[5];
+					}
+
+					influenceMatrix[0] = influenceMatrix[1] = influenceMatrix[2] = influenceMatrix[3] = influenceMatrix[4] = influenceMatrix[5] = 0.0f;
+
+					for(int wi = 0; wi < 4; wi++)
+					{
+						int boneIndex = (int)m_Vertices[boneIndexOffset+wi];
+						float weight = m_Vertices[weightOffset+wi];
+
+						int boneTransformIndex = boneIndex*6;
+						for(int j = 0; j < 6; j++)
+						{
+							influenceMatrix[j] += boneTransforms[boneTransformIndex+j] * weight;
+						}
+					}
+
+					x = influenceMatrix[0] * px + influenceMatrix[2] * py + influenceMatrix[4];
+					y = influenceMatrix[1] * px + influenceMatrix[3] * py + influenceMatrix[5];
+
+					readIdx += stride;
+					boneIndexOffset += VertexStride;
+					weightOffset += VertexStride;
+
+					buffer[writeIdx++] = x;
+					buffer[writeIdx++] = y;
+				}
+			}
+			else
+			{
+				Vec2D tempVec = new Vec2D();
+				for(int i = 0; i < m_VertexCount; i++)
+				{
+					tempVec[0] = v[readIdx];
+					tempVec[1] = v[readIdx+1];
+					Vec2D.TransformMat2D(tempVec, tempVec, worldTransform);
+					readIdx += stride;
+
+					buffer[writeIdx++] = tempVec[0];
+					buffer[writeIdx++] = tempVec[1];
+				}
 			}
 		}
 	}
