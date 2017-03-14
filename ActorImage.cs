@@ -415,5 +415,32 @@ namespace Nima
 				} 
 			}
 		}
+
+		public float[] MakeVertexPositionBuffer()
+		{
+			return new float[m_VertexCount * 2];
+		}
+
+		public void UpdateVertexPositionBuffer(float[] buffer)
+		{
+			Vec2D tempVec = new Vec2D();
+			Mat2D worldTransform = this.WorldTransform;
+			int readIdx = 0;
+			int writeIdx = 0;
+
+			float[] v = m_AnimationDeformedVertices != null ? m_AnimationDeformedVertices : m_Vertices;
+			int stride = m_AnimationDeformedVertices != null ? 2 : VertexStride;
+			
+			for(int i = 0; i < m_VertexCount; i++)
+			{
+				tempVec[0] = v[readIdx];
+				tempVec[1] = v[readIdx+1];
+				Vec2D.TransformMat2D(tempVec, tempVec, worldTransform);
+				readIdx += stride;
+
+				buffer[writeIdx++] = tempVec[0];
+				buffer[writeIdx++] = tempVec[1];
+			}
+		}
 	}
 }
