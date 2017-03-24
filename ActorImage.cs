@@ -201,6 +201,16 @@ namespace Nima
 					if(m_AnimationDeformedVertices == null || m_AnimationDeformedVertices.Length != m_VertexCount * 2)
 					{
 						m_AnimationDeformedVertices = new float[m_VertexCount * 2];
+						// Copy the deform verts from the rig verts.
+						int writeIdx = 0;
+						int readIdx = 0;
+						int readStride = VertexStride;
+						for(int i = 0; i < m_VertexCount; i++)
+						{
+							m_AnimationDeformedVertices[writeIdx++] = m_Vertices[readIdx];
+							m_AnimationDeformedVertices[writeIdx++] = m_Vertices[readIdx+1];
+							readIdx += readStride;
+						}
 					}
 				}
 				else
