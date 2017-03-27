@@ -15,7 +15,10 @@ namespace Nima
 
 	public class ActorImage : ActorNode
 	{
+		// Editor set draw index.
 		private int m_DrawOrder;
+		// Computed draw index in the image list.
+		private int m_DrawIndex;
 		BlendModes m_BlendMode;
 		private int m_TextureIndex;
 		private float[] m_Vertices;
@@ -105,6 +108,22 @@ namespace Nima
 					return;
 				}
 				m_DrawOrder = value;
+			}
+		}
+
+		public int DrawIndex
+		{
+			get
+			{
+				return m_DrawIndex;
+			}
+			set
+			{
+				if(m_DrawIndex == value)
+				{
+					return;
+				}
+				m_DrawIndex = value;
 			}
 		}
 
@@ -441,6 +460,28 @@ namespace Nima
 		public float[] MakeVertexPositionBuffer()
 		{
 			return new float[m_VertexCount * 2];
+		}
+
+		public void TransformDeformVertices(Nima.Math2D.Mat2D wt)
+		{
+			if(m_AnimationDeformedVertices == null)
+			{
+				return;
+			}
+			
+			float[] fv = m_AnimationDeformedVertices;
+
+			int vidx = 0;
+			for(int j = 0; j < m_VertexCount; j++)
+			{
+				float x = fv[vidx];
+				float y = fv[vidx+1];
+
+				fv[vidx] = wt[0] * x + wt[2] * y + wt[4];
+				fv[vidx+1] = wt[1] * x + wt[3] * y + wt[5];
+
+				vidx += 2;
+			}
 		}
 
 		public void UpdateVertexPositionBuffer(float[] buffer, bool isSkinnedDeformInWorld = true)

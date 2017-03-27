@@ -618,6 +618,11 @@ namespace Nima
 				if (m_ImageNodes != null)
 				{
 					Array.Sort<ActorImage>(m_ImageNodes, sm_ImageDrawOrderComparer);
+					// Mark draw index.
+					for(int i = 0; i < m_ImageNodes.Length; i++)
+					{
+						m_ImageNodes[i].DrawIndex = i;
+					}
 				}
 			}
 			if((m_Flags & Flags.IsVertexDeformDirty) != 0)
