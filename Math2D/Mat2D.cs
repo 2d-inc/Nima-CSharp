@@ -106,5 +106,33 @@ namespace Nima.Math2D
 			return true;
 		}
 
+		static public void GetScale(Mat2D m, Vec2D s)
+		{
+			float x = m[0];
+			float y = m[1];
+			s[0] = Math.Sign(x) * (float)Math.Sqrt(x*x + y*y);
+
+			x = m[2];
+			y = m[3];
+			s[1] = Math.Sign(y) * (float)Math.Sqrt(x*x + y*y);
+		}
+
+		static public float Decompose(Mat2D a, Vec2D s)
+		{
+			float a0 = a[0], a1 = a[1], a2 = a[2], a3 = a[3];
+			float det = a0 * a3 - a2 * a1;
+			float sx = (float)Math.Sqrt(a0*a0 + a1*a1);
+			float sy = (float)Math.Sqrt(a2*a2 + a3*a3);
+			if(det < 0)
+			{
+				sx = -sx;
+			}
+
+			s[0] = sx;
+			s[1] = sy;
+
+			return (float)Math.Atan2(a1/sx, a0/sx);
+		}
+
 	}
 }
