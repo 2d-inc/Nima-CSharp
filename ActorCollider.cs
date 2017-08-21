@@ -227,4 +227,44 @@ namespace Nima
 			m_ContourVertices = prop.m_ContourVertices;
 		}
 	}
+
+	public class ActorColliderLine : ActorCollider
+	{
+		private float[] m_Vertices;
+
+		public float[] LineVertices
+		{
+			get
+			{
+				return m_Vertices;
+			}
+		}
+
+		public static ActorColliderLine Read(Actor actor, BinaryReader reader, ActorColliderLine property = null)
+		{
+			if(property == null)
+			{
+				property = new ActorColliderLine();
+			}
+			ActorCollider.Read(actor, reader, property);
+
+			int numVertices = (int)reader.ReadUInt32();
+			property.m_Vertices = new float[numVertices*2];
+			Actor.ReadFloat32Array(reader, property.m_Vertices);
+			return property;
+		}
+
+		public override ActorComponent MakeInstance(Actor resetActor)
+		{
+			ActorColliderLine instanceCollider = new ActorColliderLine();
+			instanceCollider.Copy(this, resetActor);
+			return instanceCollider;
+		}
+
+		public void Copy(ActorColliderLine prop, Actor resetActor)
+		{
+			base.Copy(prop, resetActor);
+			m_Vertices = prop.m_Vertices;
+		}
+	}
 }

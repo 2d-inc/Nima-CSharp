@@ -31,7 +31,8 @@ namespace Nima
 			ActorColliderRectangle = 17,
 			ActorColliderTriangle = 18,
 			ActorColliderCircle = 19,
-			ActorColliderPolygon = 20
+			ActorColliderPolygon = 20,
+			ActorColliderLine = 21
 		};
 
 		[Flags]
@@ -301,6 +302,9 @@ namespace Nima
 							break;
 						case BlockTypes.ActorColliderPolygon:
 							component = ActorColliderPolygon.Read(this, nodeBlock);
+							break;
+						case BlockTypes.ActorColliderLine:
+							component = ActorColliderLine.Read(this, nodeBlock);
 							break;
 					}
 				}

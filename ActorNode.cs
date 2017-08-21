@@ -106,6 +106,11 @@ namespace Nima
 				}
 				return m_WorldTransform;
 			}
+			// N.B. this should only be done if you really know what you're doing. Generally you want to manipulate the local translation, rotation, and scale of a Node.
+			set
+			{
+				Mat2D.Copy(m_WorldTransform, value);
+			}
 		}
 
 		public float X
