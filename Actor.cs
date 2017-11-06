@@ -53,6 +53,7 @@ namespace Nima
 		protected int m_ImageNodeCount;
 		protected int m_SolverNodeCount;
 		protected int m_NodeCount;
+		protected uint m_Version;
 
         public event EventHandler<Nima.Animation.AnimationEventArgs> AnimationEvent;
 
@@ -69,6 +70,14 @@ namespace Nima
 			}
 		}
 
+		public uint Version
+		{
+			get
+			{
+				return m_Version;
+			}
+		}
+		
 		public IList<ActorComponent> Components
 		{
 			get
@@ -408,10 +417,12 @@ namespace Nima
 			{
 				return false;
 			}
-			if(version != 12)
+			if(version != 12 && version != 13)
 			{
 				return false;
 			}
+
+			m_Version = version;
 
 			//version == 1.0
 			//Debugger.Log("NIMA confirmed. " + reader.BaseStream.Length);

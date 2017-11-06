@@ -25,6 +25,7 @@ namespace Nima
 		private bool m_OverrideWorldTransform = false;
 		private bool m_OverrideRotation = false;
 		private float m_OverrideRotationValue = 0.0f;
+		private bool m_IsCollapsedVisibility = false;
 
 		public ActorNode()
 		{
@@ -376,6 +377,11 @@ namespace Nima
 			node.m_Rotation = reader.ReadSingle();
 			Actor.ReadFloat32Array(reader, node.m_Scale.Values);
 			node.m_Opacity = reader.ReadSingle();
+
+			if(actor.Version == 13)
+			{
+				node.m_IsCollapsedVisibility = reader.ReadByte() == 1;
+			}
 
 			return node;
 		}
