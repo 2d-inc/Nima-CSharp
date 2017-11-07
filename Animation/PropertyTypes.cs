@@ -18,6 +18,7 @@ namespace Nima.Animation
 		Trigger = 11,
 		IntProperty = 12,
 		FloatProperty = 13,
-		StringProperty = 14
+		StringProperty = 14,
+		ActiveChildIndex = 18,
 	};
 }

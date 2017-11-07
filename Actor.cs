@@ -23,8 +23,10 @@ namespace Nima
 			ActorEvent = 12,
 			CustomIntProperty = 13,
 			CustomFloatProperty = 14,
-			CustomStringProperty = 15
-		};
+			CustomStringProperty = 15,
+            ActorNodeSolo = 23,
+
+        };
 
 		[Flags]
 		public enum Flags
@@ -277,6 +279,10 @@ namespace Nima
 						case BlockTypes.CustomStringProperty:
 							component = CustomStringProperty.Read(this, nodeBlock);
 							break;
+						
+						case BlockTypes.ActorNodeSolo:
+							component = ActorNodeSolo.Read(this, nodeBlock);
+							break;
 					}
 				}
 				if(component is ActorNode)
@@ -379,7 +385,7 @@ namespace Nima
 			{
 				return false;
 			}
-			if(version != 12)
+			if(version < 12)
 			{
 				return false;
 			}

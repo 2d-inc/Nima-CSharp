@@ -90,7 +90,9 @@ namespace Nima.Animation
 					case PropertyTypes.StringProperty:
 						keyFrameReader = KeyFrameStringProperty.Read;
 						break;
-
+					case PropertyTypes.ActiveChildIndex:
+						keyFrameReader = KeyFrameActiveChild.Read;
+						break;
 				}
 
 				int keyFrameCount = propertyBlock.ReadUInt16();
@@ -465,14 +467,8 @@ namespace Nima.Animation
 				}
 			}
 
-			if(animatedComponentCount != 0)
-			{
-				animation.m_Components = new ComponentAnimation[animatedComponentCount];
-			}
-			if(triggerComponentCount != 0)
-			{
-				animation.m_TriggerComponents = new ComponentAnimation[triggerComponentCount];
-			}
+			animation.m_Components = new ComponentAnimation[animatedComponentCount];
+			animation.m_TriggerComponents = new ComponentAnimation[triggerComponentCount];
 
 			// Put them in their respective lists.
 			int animatedComponentIndex = 0;

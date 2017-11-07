@@ -25,6 +25,8 @@ namespace Nima
 		private bool m_OverrideWorldTransform = false;
 		private bool m_OverrideRotation = false;
 		private float m_OverrideRotationValue = 0.0f;
+		private bool m_IsCollapsedVisibility = false;
+		private bool m_RenderCollapsed = false;
 
 		public ActorNode()
 		{
@@ -231,6 +233,31 @@ namespace Nima
 			}
 		}
 
+		public bool RenderCollapsed
+		{
+			get
+			{
+				return m_RenderCollapsed;
+			}
+		}
+
+		public bool CollapsedVisibility
+		{
+			get
+			{
+				return m_IsCollapsedVisibility;
+			}
+			set
+			{
+				if(m_IsCollapsedVisibility != value)
+				{
+					m_IsCollapsedVisibility = value;
+					MarkDirty();
+					MarkWorldDirty();
+				}
+			}
+		}
+
 		public void MarkDirty()
 		{
 			if(m_IsDirty)
@@ -348,6 +375,13 @@ namespace Nima
 			if(m_Parent != null)
 			{
 				m_Parent.UpdateTransforms();
+
+				bool isRc = (m_IsCollapsedVisibility || m_Parent.RenderCollapsed);
+				if(m_RenderCollapsed != isRc)
+				{
+					m_RenderCollapsed = isRc;
+				}
+
 				m_RenderOpacity *= m_Parent.RenderOpacity;
 				if(!m_OverrideWorldTransform)
 				{
@@ -371,6 +405,7 @@ namespace Nima
 			node.m_Rotation = reader.ReadSingle();
 			Actor.ReadFloat32Array(reader, node.m_Scale.Values);
 			node.m_Opacity = reader.ReadSingle();
+			node.m_IsCollapsedVisibility = (reader.ReadByte() == 1);
 
 			return node;
 		}
@@ -413,4 +448,66 @@ namespace Nima
 			m_OverrideRotationValue = node.m_OverrideRotationValue;
 		}
 	}
+
+	public class ActorNodeSolo : ActorNode
+	{
+		private uint m_ActiveChildIndex = 0;
+
+        public ActorNodeSolo()
+        {
+
+        }
+
+        public ActorNodeSolo(Actor actor) : base(actor)
+		{
+        }
+
+		public uint ActiveChildIndex
+		{
+			get
+			{
+				return m_ActiveChildIndex;
+			}
+			set
+			{
+				if(m_ActiveChildIndex != value)
+				{
+					m_ActiveChildIndex = value;
+					for(int i = 0; i < m_Children.Count; i++)
+					{
+						ActorNode an = m_Children[i];
+						bool cv = (i != (m_ActiveChildIndex-1));
+						an.CollapsedVisibility = cv;
+					}
+				}
+			}
+		}
+
+		public void Copy(ActorNodeSolo node, Actor resetActor)
+        {
+            base.Copy(node, resetActor);
+			m_ActiveChildIndex = node.ActiveChildIndex;
+        }
+		
+		public static ActorNodeSolo Read(Actor actor, BinaryReader reader, ActorNodeSolo node = null)
+        {
+            if (node == null)
+            {
+                node = new ActorNodeSolo();
+            }
+
+			ActorNode.Read(actor, reader, node);
+
+			node.ActiveChildIndex = (uint)reader.ReadSingle();
+
+			return node;
+        }
+
+		public override ActorComponent MakeInstance(Actor resetActor)
+        {
+            ActorNodeSolo instanceNode = new ActorNodeSolo();
+            instanceNode.Copy(this, resetActor);
+            return instanceNode;
+        }
+    }
 }
