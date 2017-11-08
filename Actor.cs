@@ -385,7 +385,7 @@ namespace Nima
 			{
 				return false;
 			}
-			if(version < 12)
+			if(version != 13)
 			{
 				return false;
 			}
