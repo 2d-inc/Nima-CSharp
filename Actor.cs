@@ -32,8 +32,9 @@ namespace Nima
 			ActorColliderTriangle = 18,
 			ActorColliderCircle = 19,
 			ActorColliderPolygon = 20,
-			ActorColliderLine = 21
-		};
+			ActorColliderLine = 21,
+            ActorNodeSolo = 23,
+        };
 
 		[Flags]
 		public enum Flags
@@ -295,7 +296,6 @@ namespace Nima
 						case BlockTypes.CustomStringProperty:
 							component = CustomStringProperty.Read(this, nodeBlock);
 							break;
-
 						case BlockTypes.CustomBooleanProperty:
 							component = CustomBooleanProperty.Read(this, nodeBlock);
 							break;
@@ -314,6 +314,9 @@ namespace Nima
 							break;
 						case BlockTypes.ActorColliderLine:
 							component = ActorColliderLine.Read(this, nodeBlock);
+							break;
+						case BlockTypes.ActorNodeSolo:
+							component = ActorNodeSolo.Read(this, nodeBlock);
 							break;
 					}
 				}
@@ -417,7 +420,7 @@ namespace Nima
 			{
 				return false;
 			}
-			if(version != 12 && version != 13)
+			if(version != 13)
 			{
 				return false;
 			}

@@ -728,4 +728,36 @@ namespace Nima.Animation
 		}
 	}
 
+
+	public class KeyFrameActiveChild : KeyFrame
+    {
+		private uint m_Value;
+
+		public static KeyFrame Read(BinaryReader reader, ActorComponent component)
+        {
+			KeyFrameActiveChild frame = new KeyFrameActiveChild();
+            if (!KeyFrame.Read(reader, frame))
+            {
+                return null;
+            }
+			frame.m_Value = (uint)reader.ReadSingle();
+            return frame;
+        }
+
+        public override void SetNext(KeyFrame frame)
+        {
+            // No Interpolation
+        }
+
+        public override void ApplyInterpolation(ActorComponent component, float time, KeyFrame toFrame, float mix)
+        {
+			Apply(component, mix);
+        }
+
+        public override void Apply(ActorComponent component, float mix)
+        {
+			ActorNodeSolo soloNode = component as ActorNodeSolo;
+			soloNode.ActiveChildIndex = m_Value;
+        }
+    }
 }
