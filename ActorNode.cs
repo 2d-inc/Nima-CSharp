@@ -411,7 +411,6 @@ namespace Nima
 			node.m_Rotation = reader.ReadSingle();
 			Actor.ReadFloat32Array(reader, node.m_Scale.Values);
 			node.m_Opacity = reader.ReadSingle();
-			node.m_IsCollapsedVisibility = (reader.ReadByte() == 1);
 
 			if(actor.Version == 13)
 			{
