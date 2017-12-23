@@ -420,7 +420,7 @@ namespace Nima
 			{
 				return false;
 			}
-			if(version != 13)
+			if(version < 12)
 			{
 				return false;
 			}
