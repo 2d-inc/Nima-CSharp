@@ -29,8 +29,22 @@ namespace Nima
         private BoneChain[] m_FKChain;
         private IList<BoneChain> m_BoneData;
 
-        protected ActorIKConstraint()
+        public ActorIKConstraint()
         {
+			
+        }
+
+		// Support old system.
+		public ActorIKConstraint(ActorIKTarget target)
+        {
+			InfluencedBone[] bones = target.InfluencedBones;
+			m_Actor = target.Actor;
+			m_InfluencedBones = target.InfluencedBones;
+			m_TargetIdx = target.Idx;
+			m_ParentIdx = bones[bones.Length-1].m_BoneIdx;
+			m_InvertDirection = target.InvertDirection;
+			m_Strength = target.m_Strength;
+			m_IsEnabled = true;
         }
 
         public bool InvertDirection
@@ -71,7 +85,7 @@ namespace Nima
 		public override void CompleteResolve()
 		{
 			base.CompleteResolve();
-			if(m_InfluencedBones != null || m_InfluencedBones.Length == 0)
+			if(m_InfluencedBones == null || m_InfluencedBones.Length == 0)
 			{
 				return;
 			}
@@ -225,7 +239,7 @@ namespace Nima
 			}
 			else if(count == 2)
 			{
-				Solve2(m_BoneData[1], m_BoneData[2], worldTargetTranslation);
+				Solve2(m_BoneData[0], m_BoneData[1], worldTargetTranslation);
 			}
 			else
 			{

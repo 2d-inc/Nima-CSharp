@@ -6,7 +6,7 @@ namespace Nima
 {
 	public abstract class ActorTargetedConstraint : ActorConstraint
 	{
-        private ushort m_TargetIdx;
+        protected ushort m_TargetIdx;
         protected ActorComponent m_Target;
 
         public ActorComponent Target

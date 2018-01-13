@@ -6,31 +6,27 @@ namespace Nima
 {
 	public class ActorIKTarget : ActorNode
 	{
-		public class InfluencedBone
-		{
-			public ushort m_BoneIdx;
-			public ActorBone m_Bone;
-		}
-
 		private InfluencedBone[] m_InfluencedBones;
 		private bool m_InvertDirection;
-		private float m_Strength;
-		private int m_Order;
-		
+		public float m_Strength;
 
-		private ActorBone m_Bone1;
-		private ActorBone m_Bone1Child;
-		private ActorBone m_Bone2;
+		private ActorIKConstraint m_Constraint;
 
-		private class BoneChain
+		public InfluencedBone[] InfluencedBones
 		{
-			public ActorBone m_Bone;
-			public float m_Angle;
-			public bool m_Included;
+			get
+			{
+				return m_InfluencedBones;
+			}
 		}
-
-		private BoneChain[] m_Chain;
-
+		
+		public bool InvertDirection
+		{
+			get
+			{
+				return m_InvertDirection;
+			}
+		}
 		public static ActorIKTarget Read(Actor actor, BinaryReader reader, ActorIKTarget node = null)
 		{
 			if(node == null)
@@ -40,7 +36,8 @@ namespace Nima
 			
 			ActorNode.Read(actor, reader, node);
 
-			node.m_Order = reader.ReadUInt16();
+			// discard old value
+			int order = reader.ReadUInt16();
 			node.m_Strength = reader.ReadSingle();
 			node.m_InvertDirection = reader.ReadByte() == 1;
 			
@@ -60,25 +57,12 @@ namespace Nima
 			return node;
 		}
 
-		private bool DoesInfluence(ActorBone bone)
-		{
-			if(bone == null)
-			{
-				return false;
-			}
-			foreach(InfluencedBone b in m_InfluencedBones)
-			{
-				if(b.m_Bone == bone)
-				{
-					return true;
-				}
-			}	
-			return false;
-		}
-
 		public override void ResolveComponentIndices(ActorComponent[] components)
 		{
 			base.ResolveComponentIndices(components);
+
+			m_Constraint = new ActorIKConstraint(this);
+			m_Constraint.ResolveComponentIndices(components);
 			// if(m_InfluencedBones != null)
 			// {
 			// 	for(int i = 0; i < m_InfluencedBones.Length; i++)
@@ -130,6 +114,12 @@ namespace Nima
 			// }
 		}
 
+		public override void CompleteResolve()
+		{
+			base.CompleteResolve();
+			m_Constraint.CompleteResolve();
+		}
+
 		public override ActorComponent MakeInstance(Actor resetActor)
 		{
 			ActorIKTarget instanceNode = new ActorIKTarget();
@@ -141,7 +131,6 @@ namespace Nima
 		{
 			base.Copy(node, resetActor);
 
-			m_Order = node.m_Order;
 			m_InvertDirection = node.m_InvertDirection;
 			m_Strength = node.m_Strength;
 			m_InfluencedBones = new InfluencedBone[node.m_InfluencedBones.Length];
@@ -157,21 +146,14 @@ namespace Nima
 		{
 			get
 			{
-				return m_Strength;
+				return m_Constraint.Strength;
 			}
 			set
 			{
-				m_Strength = value;
+				m_Constraint.Strength = value;
 			}
 		}
 
-		public int Order
-		{
-			get
-			{
-				return m_Order;
-			}
-		}
 		
 		// public void SolveStart()
 		// {

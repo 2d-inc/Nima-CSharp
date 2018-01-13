@@ -10,7 +10,7 @@ namespace Nima
 		protected string m_Name = "Unnamed Node";
 		protected ActorNode m_Parent;
 		protected Actor m_Actor;
-		private ushort m_ParentIdx = 0;
+		protected ushort m_ParentIdx = 0;
 		private ushort m_Idx = 0;
 		private List<CustomIntProperty> m_CustomIntProperties;
 		private List<CustomFloatProperty> m_CustomFloatProperties;
@@ -190,6 +190,10 @@ namespace Nima
 				if(this is ActorNode)
 				{
 					node.AddChild(this as ActorNode);
+				}
+				else
+				{
+					m_Parent = node;
 				}
 				m_Actor.AddDependency(this, node);
 			}

@@ -26,6 +26,10 @@ namespace Nima
 		public override void CompleteResolve()
 		{
 			base.CompleteResolve();
+			if(m_Children == null)
+			{
+				return;
+			}
 			foreach(ActorNode node in m_Children)
 			{
 				if(node is ActorBone)
