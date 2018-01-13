@@ -54,6 +54,15 @@ namespace Nima.Math2D
 	    	return o;
 		}
 
+		public static Vec2D TransformMat2(Vec2D o, Vec2D a, Mat2D m) 
+		{
+			float x = a[0];
+	        float y = a[1];
+	    	o[0] = m[0] * x + m[2] * y;
+	    	o[1] = m[1] * x + m[3] * y;
+	    	return o;
+		}
+
 		public static Vec2D Subtract(Vec2D o, Vec2D a, Vec2D b) 
 		{
 	    	o[0] = a[0] - b[0];

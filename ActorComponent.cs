@@ -16,6 +16,9 @@ namespace Nima
 		private List<CustomFloatProperty> m_CustomFloatProperties;
 		private List<CustomStringProperty> m_CustomStringProperties;
 		private List<CustomBooleanProperty> m_CustomBooleanProperties;
+		public IList<ActorComponent>  m_Dependents;
+		public uint m_GraphOrder;
+		public byte m_DirtMask;
 
 		public ActorComponent(Actor actor)
 		{
@@ -182,10 +185,19 @@ namespace Nima
 		public virtual void ResolveComponentIndices(ActorComponent[] components)
 		{
 			ActorNode node = components[m_ParentIdx] as ActorNode;
-			if(node != null && this is ActorNode)
+			if(node != null)
 			{
-				node.AddChild(this as ActorNode);
+				if(this is ActorNode)
+				{
+					node.AddChild(this as ActorNode);
+				}
+				m_Actor.AddDependency(this, node);
 			}
+		}
+
+		public virtual void CompleteResolve()
+		{
+
 		}
 
 		public abstract ActorComponent MakeInstance(Actor resetActor);
@@ -197,5 +209,9 @@ namespace Nima
 			m_ParentIdx = component.m_ParentIdx;
 			m_Idx = component.m_Idx;
 		}
+
+		public virtual void OnDirty(byte dirt){}
+
+		public virtual void Update(byte dirt){}
 	}
 }

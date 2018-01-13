@@ -134,5 +134,57 @@ namespace Nima.Math2D
 			return (float)Math.Atan2(a1/sx, a0/sx);
 		}
 
+		static public void Identity(Mat2D mat)
+		{
+			mat[0] = 1.0f;
+			mat[1] = 0.0f;
+			mat[2] = 0.0f;
+			mat[3] = 1.0f;
+			mat[4] = 0.0f;
+			mat[5] = 0.0f;
+		}
+
+		static public void Decompose(Mat2D m, TransformComponents result)
+		{
+			float m0 = m[0], m1 = m[1], m2 = m[2], m3 = m[3];
+
+			float rotation = (float)Math.Atan2(m1, m0);
+			float denom = m0*m0 + m1*m1;
+			float scaleX = (float)Math.Sqrt(denom);
+			float scaleY = (m0 * m3 - m2 * m1) / scaleX;
+			float skewX = (float)Math.Atan2(m0 * m2 + m1 * m3, denom);
+
+			result[0] = m[4];
+			result[1] = m[5];
+			result[2] = scaleX;
+			result[3] = scaleY;
+			result[4] = rotation;
+			result[5] = skewX;
+		}
+
+		static public void Compose(Mat2D m, TransformComponents result)
+		{
+			float r = result[4];
+
+			if(r != 0.0)
+			{
+				Mat2D.FromRotation(m, r);
+			}
+			else
+			{
+				Mat2D.Identity(m);
+			}
+			m[4] = result[0];
+			m[5] = result[1];
+			Mat2D.Scale(m, m, result.Scale);
+
+			float sk = result[5];
+			if(sk != 0.0)
+			{
+				m[2] = m[0] * sk + m[2];
+				m[3] = m[1] * sk + m[3];
+			}
+		}
+
 	}
 }

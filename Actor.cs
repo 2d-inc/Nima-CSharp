@@ -34,13 +34,22 @@ namespace Nima
 			ActorColliderPolygon = 20,
 			ActorColliderLine = 21,
             ActorNodeSolo = 23,
+			JellyComponent = 28,
+			ActorJellyBone = 29,
+			ActorIKConstraint = 30,
+			ActorDistanceConstraint = 31,
+			ActorTranslationConstraint = 32,
+			ActorRotationConstraint = 33,
+			ActorScaleConstraint = 34,
+			ActorTransformConstraint = 35
         };
 
 		[Flags]
 		public enum Flags
 		{
 		    IsImageDrawOrderDirty = 1<<0,
-		    IsVertexDeformDirty = 1<<1
+		    IsVertexDeformDirty = 1<<1,
+			IsDirty = 1<<2
 		}
 
 		protected Flags m_Flags;
@@ -48,19 +57,86 @@ namespace Nima
 		protected ActorComponent[] m_Components;
 		protected ActorNode[] m_Nodes;
 		protected ActorImage[] m_ImageNodes;
-		protected ISolver[] m_Solvers;
 		protected Nima.Animation.ActorAnimation[] m_Animations;
 		protected int m_MaxTextureIndex;
 		protected int m_ImageNodeCount;
-		protected int m_SolverNodeCount;
 		protected int m_NodeCount;
 		protected uint m_Version;
 
         public event EventHandler<Nima.Animation.AnimationEventArgs> AnimationEvent;
+		IList<ActorComponent> m_DependencyOrder;
+		uint m_DirtDepth;
 
 		public Actor()
 		{
 			m_Flags = Flags.IsImageDrawOrderDirty | Flags.IsVertexDeformDirty;
+			m_DirtDepth = 0;
+		}
+
+		public bool AddDependency(ActorComponent a, ActorComponent b)
+		{
+			IList<ActorComponent> dependents = b.m_Dependents;
+			if(dependents == null)
+			{
+				b.m_Dependents = dependents = new List<ActorComponent>();
+			}
+			if(dependents.Contains(a))
+			{
+				return false;
+			}
+			dependents.Add(a);
+			return true;
+		}
+
+		void SortDependencies()
+		{
+			DependencySorter sorter = new DependencySorter();
+			m_DependencyOrder = sorter.Sort(m_Root);
+			uint graphOrder = 0;
+			foreach(ActorComponent component in m_DependencyOrder)
+			{
+				component.m_GraphOrder = graphOrder++;
+				component.m_DirtMask = 255;
+			}
+			m_Flags |= Flags.IsDirty;
+		}
+
+		public bool AddDirt(ActorComponent component, byte value, bool recurse = false)
+		{
+			if((component.m_DirtMask & value) == value)
+			{
+				// Already marked.
+				return false;
+			}
+
+			// Make sure dirt is set before calling anything that can set more dirt.
+			byte dirt = (byte)(component.m_DirtMask | value);
+			component.m_DirtMask = dirt;
+
+			m_Flags |= Flags.IsDirty;
+
+			component.OnDirty(dirt);
+
+			// If the order of this component is less than the current dirt depth, update the dirt depth
+			// so that the update loop can break out early and re-run (something up the tree is dirty).
+			if(component.m_GraphOrder < m_DirtDepth)
+			{
+				m_DirtDepth = component.m_GraphOrder;	
+			}
+			if(!recurse)
+			{
+				return true;
+			}
+			IList<ActorComponent> dependents = component.m_Dependents;
+			if(dependents != null)
+			{
+				foreach(ActorComponent d in dependents)
+				{
+					AddDirt(d, value, recurse);
+				}
+			}
+
+			return true;
 		}
 
 		public void OnAnimationEvent(Nima.Animation.AnimationEventArgs ev)
@@ -159,14 +235,6 @@ namespace Nima
 			}
 		}
 
-		public int SolverNodeCount
-		{
-			get
-			{
-				return m_SolverNodeCount;
-			}
-		}
-
 		public int TexturesUsed
 		{
 			get
@@ -216,15 +284,6 @@ namespace Nima
 			}
 			return null;
 		}
-
-		private class SolverComparer : IComparer<ISolver>
-		{
-			public int Compare(ISolver x, ISolver y)  
-			{
-				return x.Order.CompareTo(y.Order);
-			}
-		}
-		static SolverComparer sm_SolverComparer = new SolverComparer();
 
 		private class ImageDrawOrderComparer : IComparer<ActorImage>
 		{
@@ -296,6 +355,7 @@ namespace Nima
 						case BlockTypes.CustomStringProperty:
 							component = CustomStringProperty.Read(this, nodeBlock);
 							break;
+
 						case BlockTypes.CustomBooleanProperty:
 							component = CustomBooleanProperty.Read(this, nodeBlock);
 							break;
@@ -303,30 +363,38 @@ namespace Nima
 						case BlockTypes.ActorColliderRectangle:
 							component = ActorColliderRectangle.Read(this, nodeBlock);
 							break;
+
 						case BlockTypes.ActorColliderTriangle:
 							component = ActorColliderTriangle.Read(this, nodeBlock);
 							break;
+
 						case BlockTypes.ActorColliderCircle:
 							component = ActorColliderCircle.Read(this, nodeBlock);
 							break;
+
 						case BlockTypes.ActorColliderPolygon:
 							component = ActorColliderPolygon.Read(this, nodeBlock);
 							break;
+
 						case BlockTypes.ActorColliderLine:
 							component = ActorColliderLine.Read(this, nodeBlock);
 							break;
+
 						case BlockTypes.ActorNodeSolo:
 							component = ActorNodeSolo.Read(this, nodeBlock);
+							break;
+
+						case BlockTypes.ActorJellyBone:
+							component = ActorJellyBone.Read(this, nodeBlock);
+							break;
+
+						case BlockTypes.JellyComponent:
 							break;
 					}
 				}
 				if(component is ActorNode)
 				{
 					m_NodeCount++;
-				}
-				if(component is ISolver)
-				{
-					m_SolverNodeCount++;
 				}
 
 				m_Components[componentIndex] = component;
@@ -338,13 +406,11 @@ namespace Nima
 			}
 
 			m_ImageNodes = new ActorImage[m_ImageNodeCount];
-			m_Solvers = new ISolver[m_SolverNodeCount];
 			m_Nodes = new ActorNode[m_NodeCount];
 			m_Nodes[0] = m_Root;
 
 			// Resolve nodes.
 			int imgIdx = 0;
-			int slvIdx = 0;
 			int anIdx = 0;
 
 			ActorComponent[] components = m_Components;
@@ -363,12 +429,6 @@ namespace Nima
 					m_ImageNodes[imgIdx++] = ain;
 				}
 
-				ISolver slv = c as ISolver;
-				if(slv != null)
-				{
-					m_Solvers[slvIdx++] = slv;
-				}
-
 				ActorNode an = c as ActorNode;
 				if(an != null)
 				{
@@ -376,12 +436,16 @@ namespace Nima
 				}
 			}
 
-
-			// Sort the solvers.
-			if(m_Solvers != null)
+			for(int i = 1; i <= componentCount; i++)
 			{
-				Array.Sort<ISolver>(m_Solvers, sm_SolverComparer);
+				ActorComponent c = components[i];
+				if(c != null)
+				{
+					c.CompleteResolve();
+				}
 			}
+
+			SortDependencies();
 		}
 
 		private void ReadAnimationsBlock(BlockReader block)
@@ -495,7 +559,6 @@ namespace Nima
 			m_Flags = actor.m_Flags;
 			m_MaxTextureIndex = actor.m_MaxTextureIndex;
 			m_ImageNodeCount = actor.m_ImageNodeCount;
-			m_SolverNodeCount = actor.m_SolverNodeCount;
 			m_NodeCount = actor.m_NodeCount;
 
 			if(actor.ComponentCount != 0)
@@ -510,16 +573,11 @@ namespace Nima
 			{
 				m_ImageNodes = new ActorImage[m_ImageNodeCount];
 			}
-			if(m_SolverNodeCount != 0)
-			{
-				m_Solvers = new ISolver[m_SolverNodeCount];
-			}
 
 			if(actor.ComponentCount != 0)
 			{
 				int idx = 0;
 				int imgIdx = 0;
-				int slvIdx = 0;
 				int ndIdx = 0;
 
 				foreach(ActorComponent component in actor.Components)
@@ -542,12 +600,6 @@ namespace Nima
 					{
 						m_ImageNodes[imgIdx++] = imageInstance;
 					}
-
-					ISolver solver = instanceComponent as ISolver;
-					if(solver != null)
-					{
-						m_Solvers[slvIdx++] = solver;
-					}
 				}
 			}
 
@@ -562,12 +614,16 @@ namespace Nima
 				component.ResolveComponentIndices(m_Components);
 			}
 
-			// Is this really necessary? We sorted on load...
-			// Sort the solvers.
-			if(m_Solvers != null)
+			foreach(ActorComponent component in m_Components)
 			{
-				Array.Sort<ISolver>(m_Solvers, sm_SolverComparer);
+				if(m_Root == component || component == null)
+				{
+					continue;
+				}
+				component.CompleteResolve();
 			}
+
+			SortDependencies();
 		}
 
 		protected virtual void UpdateVertexDeform(ActorImage image) {}
@@ -578,56 +634,34 @@ namespace Nima
 
 		public virtual void Advance(float seconds)
 		{
-			bool runSolvers = false;
-			if(m_Solvers != null)
+			if((m_Flags & Flags.IsDirty) != 0)
 			{
-				foreach(ISolver solver in m_Solvers)
+				const int MaxSteps = 100;
+				int step = 0;
+				int count = m_DependencyOrder.Count;
+				while((m_Flags & Flags.IsDirty) != 0 && step < MaxSteps)
 				{
-					if(solver.NeedsSolve)
+					m_Flags &= ~Flags.IsDirty;
+					// Track dirt depth here so that if something else marks dirty, we restart.
+					for(int i = 0; i < count; i++)
 					{
-						runSolvers = true;
-						break;
+						ActorComponent component = m_DependencyOrder[i];
+						m_DirtDepth = (uint)i;
+						byte d = component.m_DirtMask;
+						if(d == 0)
+						{
+							continue;
+						}
+						component.m_DirtMask = 0;
+						component.Update(d);
+						if(m_DirtDepth < i)
+						{
+							break;
+						}
 					}
+					step++;
 				}
 			}
-
-			foreach(ActorNode n in m_Nodes)
-			{
-				n.UpdateTransforms();
-			}
-
-			if(runSolvers)
-			{
-				for(int i = 0; i < m_SolverNodeCount; i++)
-				{
-					ISolver solver = m_Solvers[i];
-					solver.SolveStart();
-				}	
-
-				for(int i = 0; i < m_SolverNodeCount; i++)
-				{
-					ISolver solver = m_Solvers[i];
-					solver.Solve();
-				}
-
-				for(int i = 0; i < m_SolverNodeCount; i++)
-				{
-					ISolver solver = m_Solvers[i];
-					solver.SuppressMarkDirty = true;
-				}
-					
-				foreach(ActorNode n in m_Nodes)
-				{
-					n.UpdateTransforms();
-				}
-
-				for(int i = 0; i < m_SolverNodeCount; i++)
-				{
-					ISolver solver = m_Solvers[i];
-					solver.SuppressMarkDirty = false;
-				}
-			}
-
 
 			if((m_Flags & Flags.IsImageDrawOrderDirty) != 0)
 			{

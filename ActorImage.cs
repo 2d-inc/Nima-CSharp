@@ -303,7 +303,6 @@ namespace Nima
 				int bidx = 6;
 				foreach(BoneConnection bc in m_BoneConnections)
 				{
-					bc.m_Node.UpdateTransforms();
 					Mat2D.Multiply(mat, bc.m_Node.WorldTransform, bc.m_InverseBind);
 
 					m_BoneMatrices[bidx++] = mat[0];
@@ -327,7 +326,6 @@ namespace Nima
 				int bidx = 6;
 				foreach(BoneConnection bc in m_BoneConnections)
 				{
-					bc.m_Node.UpdateTransforms();
 					Mat2D mat = bc.m_Node.WorldTransform;
 
 					m_BoneMatrices[bidx++] = mat[0];

@@ -4,74 +4,16 @@ using Nima.Math2D;
 
 namespace Nima
 {
-	public class ActorBone : ActorNode
+	public class ActorBone : ActorBoneBase
 	{
-		private float m_Length;
-		private bool m_IsConnectedToImage;
+		private ActorBone m_FirstBone;
 
-		public float Length
+		public ActorBone FirstBone
 		{
 			get
 			{
-				return m_Length;
+				return m_FirstBone;
 			}
-			set
-			{
-				if(m_Length == value)
-				{
-					return;
-				}
-				m_Length = value;
-				if(m_Children == null)
-				{
-					return;
-				}
-				foreach(ActorNode node in m_Children)
-				{
-					ActorBone bone = node as ActorBone;
-					if(bone == null)
-					{
-						continue;
-					}
-					bone.X = value;
-				}
-			}
-		}
-
-		public bool IsConnectedToImage
-		{
-			get
-			{
-				return m_IsConnectedToImage;
-			}	
-			set
-			{
-				m_IsConnectedToImage = value;
-			}
-		}
-		public Vec2D GetTipWorldTranslation(Vec2D vec)
-		{
-			Mat2D transform = new Mat2D();
-			transform[4] = Length;
-			Mat2D.Multiply(transform, WorldTransform, transform);
-			vec[0] = transform[4];
-			vec[1] = transform[5];
-			return vec;
-		}
-
-		public static ActorBone Read(Actor actor, BinaryReader reader, ActorBone node = null)
-		{
-			if(node == null)
-			{
-				node = new ActorBone();
-			}
-			
-			ActorNode.Read(actor, reader, node);
-
-			node.m_Length = reader.ReadSingle();
-
-
-			return node;
 		}
 
 		public override ActorComponent MakeInstance(Actor resetActor)
@@ -81,11 +23,28 @@ namespace Nima
 			return instanceNode;
 		}
 
-		public void Copy(ActorBone node, Actor resetActor)
+		public override void CompleteResolve()
 		{
-			base.Copy(node, resetActor);
-			m_Length = node.m_Length;
-			m_IsConnectedToImage = node.m_IsConnectedToImage;
+			base.CompleteResolve();
+			foreach(ActorNode node in m_Children)
+			{
+				if(node is ActorBone)
+				{
+					m_FirstBone = node as ActorBone;
+					return;
+				}
+			}
+		}
+
+		public static ActorBone Read(Actor actor, BinaryReader reader, ActorBone node = null)
+		{
+            if(node == null)
+            {
+                node = new ActorBone();
+            }
+            
+			ActorBoneBase.Read(actor, reader, node);
+			return node;
 		}
 	}
 }

@@ -8,7 +8,7 @@ namespace Nima
 	public class ActorNode : ActorComponent
 	{
 		protected List<ActorNode> m_Children;
-		protected List<ActorNode> m_Dependents;
+		//protected List<ActorNode> m_Dependents;
 		protected Mat2D m_Transform = new Mat2D();
 		protected Mat2D m_WorldTransform = new Mat2D();
 
@@ -18,16 +18,15 @@ namespace Nima
 		protected float m_Opacity = 1.0f;
 		protected float m_RenderOpacity = 1.0f;
 
-		private bool m_IsDirty = true;
-		private bool m_IsWorldDirty = true;
-		private bool m_SuppressMarkDirty = false;
-
 		private bool m_OverrideWorldTransform = false;
-		private bool m_OverrideRotation = false;
-		private float m_OverrideRotationValue = 0.0f;
 		private bool m_IsCollapsedVisibility = false;
 
 		private bool m_RenderCollapsed = false;
+
+		private IList<ActorConstraint> m_Constraints;
+
+		const byte TransformDirty = 1<<0;
+		const byte WorldTransformDirty = 1<<1;
 
 		public ActorNode()
 		{
@@ -38,42 +37,10 @@ namespace Nima
 		{
 		}
 		
-		public bool SuppressMarkDirty
-		{
-			get
-			{
-				return m_SuppressMarkDirty;
-			}
-			set
-			{
-				m_SuppressMarkDirty = value;
-			}
-		}
-
-		public bool IsWorldDirty
-		{
-			get
-			{
-				return m_IsWorldDirty;
-			}
-		}
-		
-		public bool IsDirty
-		{
-			get
-			{
-				return m_IsDirty;
-			}
-		}
-
 		public Mat2D Transform
 		{
 			get
 			{
-				if(m_IsDirty)
-				{
-					UpdateTransform();
-				}
 				return m_Transform;
 			}
 		}
@@ -95,7 +62,7 @@ namespace Nima
 					m_OverrideWorldTransform = true;
 					Mat2D.Copy(m_WorldTransform, value);
 				}
-				MarkWorldDirty();
+				MarkTransformDirty();
 			}
 		}
 
@@ -103,10 +70,6 @@ namespace Nima
 		{
 			get
 			{
-				if(m_IsWorldDirty)
-				{
-					UpdateWorldTransform();
-				}
 				return m_WorldTransform;
 			}
 			// N.B. this should only be done if you really know what you're doing. Generally you want to manipulate the local translation, rotation, and scale of a Node.
@@ -129,8 +92,7 @@ namespace Nima
 					return;
 				}
 				m_Translation[0] = value;
-				MarkDirty();
-				MarkWorldDirty();
+				MarkTransformDirty();
 			}
 		}
 		
@@ -147,8 +109,7 @@ namespace Nima
 					return;
 				}
 				m_Translation[1] = value;
-				MarkDirty();
-				MarkWorldDirty();
+				MarkTransformDirty();
 			}
 		}
 		
@@ -165,16 +126,7 @@ namespace Nima
 					return;
 				}
 				m_Rotation = value;
-				MarkDirty();
-				MarkWorldDirty();
-			}
-		}
-
-		public float RenderRotation
-		{
-			get
-			{
-				return m_OverrideRotation ? m_OverrideRotationValue : m_Rotation;
+				MarkTransformDirty();
 			}
 		}
 		
@@ -191,8 +143,7 @@ namespace Nima
 					return;
 				}
 				m_Scale[0] = value;
-				MarkDirty();
-				MarkWorldDirty();
+				MarkTransformDirty();
 			}
 		}
 		
@@ -209,8 +160,7 @@ namespace Nima
 					return;
 				}
 				m_Scale[1] = value;
-				MarkDirty();
-				MarkWorldDirty();
+				MarkTransformDirty();
 			}
 		}
 		
@@ -227,7 +177,7 @@ namespace Nima
 					return;
 				}
 				m_Opacity = value;
-				MarkWorldDirty();
+				MarkTransformDirty();
 			}
 		}
 
@@ -258,58 +208,28 @@ namespace Nima
 				if(m_IsCollapsedVisibility != value)
 				{
 					m_IsCollapsedVisibility = value;
-					MarkDirty();
-					MarkWorldDirty();
+					MarkTransformDirty();
 				}
 			}
 		}
 
-		public void MarkDirty()
+		public void MarkTransformDirty()
 		{
-			if(m_IsDirty)
+			if(m_Actor == null)
+			{
+				// Still loading?
+				return;
+			}
+			if(!m_Actor.AddDirt(this, TransformDirty))
 			{
 				return;
 			}
-			m_IsDirty = true;
-		}
-
-		public void MarkWorldDirty()
-		{
-			if(m_IsWorldDirty || m_SuppressMarkDirty)
-			{
-				return;
-			}
-			m_IsWorldDirty = true;
-			if(m_Children != null)
-			{
-				foreach(ActorNode node in m_Children)
-				{
-					node.MarkWorldDirty();
-				}
-			}
-			if(m_Dependents != null)
-			{
-				foreach(ActorNode node in m_Dependents)
-				{
-					node.MarkWorldDirty();
-				}
-			}
-		}
-
-		public void AddDependent(ActorNode node)
-		{
-			if(m_Dependents == null)
-			{
-				m_Dependents = new List<ActorNode>();
-			}
-			m_Dependents.Add(node);
+			m_Actor.AddDirt(this, WorldTransformDirty, true);
 		}
 
 		private void UpdateTransform()
 		{
-			m_IsDirty = false;
-
-			Mat2D.FromRotation(m_Transform, m_OverrideRotation ? m_OverrideRotationValue : m_Rotation);
+			Mat2D.FromRotation(m_Transform, m_Rotation);
 			m_Transform[4] = m_Translation[0];
 			m_Transform[5] = m_Translation[1];
 			Mat2D.Scale(m_Transform, m_Transform, m_Scale);
@@ -317,84 +237,25 @@ namespace Nima
 
 		public Vec2D GetWorldTranslation(Vec2D vec)
 		{
-			if(m_IsWorldDirty)
-			{
-				UpdateWorldTransform();
-			}
 			vec[0] = m_WorldTransform[4];
 			vec[1] = m_WorldTransform[5];
 			return vec;
 		}
 
-		public void SetRotationOverride(float v)
-		{
-			if(!m_OverrideRotation || m_OverrideRotationValue != v)
-			{
-				m_OverrideRotation = true;
-				m_OverrideRotationValue = v;
-				MarkDirty();
-				MarkWorldDirty();
-			}
-		}
-
-		public void ClearRotationOverride()
-		{
-			if(m_OverrideRotation)
-			{
-				m_OverrideRotation = false;
-				MarkDirty();
-				MarkWorldDirty();
-			}
-		}
-
-		public float OverrideRotationValue
-		{
-			get
-			{
-				return m_OverrideRotationValue;
-			}
-		}
-
-		public void UpdateTransforms()
-		{
-			if(m_IsDirty)
-			{
-				UpdateTransform();
-			}
-			if(m_IsWorldDirty)
-			{
-				UpdateWorldTransform();
-			}
-		}
-
 		private void UpdateWorldTransform()
 		{
-			m_IsWorldDirty = false;
-
-			if(m_IsDirty)
-			{
-				UpdateTransform();
-			}
-		
 			m_RenderOpacity = m_Opacity;
 		
 			if(m_Parent != null)
 			{
-				m_Parent.UpdateTransforms();
-
-				bool isRc = (m_IsCollapsedVisibility || m_Parent.RenderCollapsed);
-				if(m_RenderCollapsed != isRc)
-				{
-					m_RenderCollapsed = isRc;
-				}
-
-				m_RenderOpacity *= m_Parent.RenderOpacity;
+				m_RenderCollapsed = m_IsCollapsedVisibility || m_Parent.m_RenderCollapsed;
+				m_RenderOpacity *= m_Parent.m_RenderOpacity;
 				if(!m_OverrideWorldTransform)
 				{
 					Mat2D.Multiply(m_WorldTransform, m_Parent.m_WorldTransform, m_Transform);
 				}
 			}
-			else if(!m_OverrideWorldTransform)
+			else
 			{
 				Mat2D.Copy(m_WorldTransform, m_Transform);
 			}
@@ -434,6 +295,14 @@ namespace Nima
 			m_Children.Add(node);
 		}
 
+		public IList<ActorNode> Children
+		{
+			get
+			{
+				return m_Children;
+			}
+		}
+
 		public override ActorComponent MakeInstance(Actor resetActor)
 		{
 			ActorNode instanceNode = new ActorNode();
@@ -444,8 +313,6 @@ namespace Nima
 		public void Copy(ActorNode node, Actor resetActor)
 		{
 			base.Copy(node, resetActor);
-			m_IsDirty = true;
-			m_IsWorldDirty = true;
 			m_Transform = new Mat2D(node.m_Transform);
 			m_WorldTransform = new Mat2D(node.m_WorldTransform);
 			m_Translation = new Vec2D(node.m_Translation);
@@ -454,70 +321,47 @@ namespace Nima
 			m_Opacity = node.m_Opacity;
 			m_RenderOpacity = node.m_RenderOpacity;
 			m_OverrideWorldTransform = node.m_OverrideWorldTransform;
-			m_OverrideRotation = node.m_OverrideRotation;
-			m_OverrideRotationValue = node.m_OverrideRotationValue;
 		}
-	}
 
-	public class ActorNodeSolo : ActorNode
-	{
-		private uint m_ActiveChildIndex = 0;
-
-        public ActorNodeSolo()
-        {
-
-        }
-
-        public ActorNodeSolo(Actor actor) : base(actor)
+		public override void OnDirty(byte dirt)
 		{
-        }
 
-		public uint ActiveChildIndex
+		}
+
+		public bool AddConstraint(ActorConstraint constraint)
 		{
-			get
+			if(m_Constraints == null)
 			{
-				return m_ActiveChildIndex;
+				m_Constraints = new List<ActorConstraint>();
 			}
-			set
+			if(m_Constraints.Contains(constraint))
 			{
-				if(m_ActiveChildIndex != value)
+				return false;
+			}
+			m_Constraints.Add(constraint);
+			return true;
+		}
+
+		public override void Update(byte dirt)
+		{
+			if((dirt & TransformDirty) == TransformDirty)
+			{
+				UpdateTransform();
+			}
+			if((dirt & WorldTransformDirty) == WorldTransformDirty)
+			{
+				UpdateWorldTransform();
+				if(m_Constraints != null)
 				{
-					m_ActiveChildIndex = value;
-					for(int i = 0; i < m_Children.Count; i++)
+					foreach(ActorConstraint constraint in m_Constraints)
 					{
-						ActorNode an = m_Children[i];
-						bool cv = (i != (m_ActiveChildIndex-1));
-						an.CollapsedVisibility = cv;
+						if(constraint.IsEnabled)
+						{
+							constraint.Constrain(this);
+						}
 					}
 				}
 			}
 		}
-
-		public void Copy(ActorNodeSolo node, Actor resetActor)
-        {
-            base.Copy(node, resetActor);
-			m_ActiveChildIndex = node.ActiveChildIndex;
-        }
-		
-		public static ActorNodeSolo Read(Actor actor, BinaryReader reader, ActorNodeSolo node = null)
-        {
-            if (node == null)
-            {
-                node = new ActorNodeSolo();
-            }
-
-			ActorNode.Read(actor, reader, node);
-
-			node.ActiveChildIndex = (uint)reader.ReadSingle();
-
-			return node;
-        }
-
-		public override ActorComponent MakeInstance(Actor resetActor)
-        {
-            ActorNodeSolo instanceNode = new ActorNodeSolo();
-            instanceNode.Copy(this, resetActor);
-            return instanceNode;
-        }
-    }
+	}
 }
