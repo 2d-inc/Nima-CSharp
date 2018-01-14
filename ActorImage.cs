@@ -400,7 +400,7 @@ namespace Nima
 				{
 					BoneConnection bc = m_BoneConnections[i];
 					bc.m_Node = components[bc.m_BoneIdx] as ActorNode;
-					ActorBone bone = bc.m_Node as ActorBone;
+					ActorBoneBase bone = bc.m_Node as ActorBoneBase;
 					bone.IsConnectedToImage = true;
 				}	
 			}

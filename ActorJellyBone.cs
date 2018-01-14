@@ -20,7 +20,11 @@ namespace Nima
                 node = new ActorJellyBone();
             }
             
-			ActorBoneBase.Read(actor, reader, node);
+			// The Jelly Bone has a specialized read that doesn't go down the typical node path, this is because majority of the transform properties
+			// of the Jelly Bone are controlled by the Jelly Controller and are unnecessary for serialization.
+			ActorComponent.Read(actor, reader, node);
+			node.m_Opacity = reader.ReadSingle();
+			node.m_IsCollapsedVisibility = reader.ReadByte() == 1;
 			return node;
 		}
 	}

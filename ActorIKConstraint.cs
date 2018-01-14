@@ -181,7 +181,7 @@ namespace Nima
 			}
 		}
 
-        public static ActorIKConstraint Read(Actor actor, BinaryReader reader, ActorIKConstraint component)
+        public static ActorIKConstraint Read(Actor actor, BinaryReader reader, ActorIKConstraint component = null)
 		{
             if(component == null)
 			{
@@ -430,12 +430,15 @@ namespace Nima
 			base.Copy(node, resetActor);
 
 			m_InvertDirection = node.m_InvertDirection;
-			m_InfluencedBones = new InfluencedBone[node.m_InfluencedBones.Length];
-			for(int i = 0; i < m_InfluencedBones.Length; i++)
+			if(node.m_InfluencedBones != null)
 			{
-				InfluencedBone ib = new InfluencedBone();
-				ib.m_BoneIdx = node.m_InfluencedBones[i].m_BoneIdx;
-				m_InfluencedBones[i] = ib;
+				m_InfluencedBones = new InfluencedBone[node.m_InfluencedBones.Length];
+				for(int i = 0; i < m_InfluencedBones.Length; i++)
+				{
+					InfluencedBone ib = new InfluencedBone();
+					ib.m_BoneIdx = node.m_InfluencedBones[i].m_BoneIdx;
+					m_InfluencedBones[i] = ib;
+				}
 			}
 		}
     }

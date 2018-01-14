@@ -7,6 +7,7 @@ namespace Nima
 	public class ActorBone : ActorBoneBase
 	{
 		private ActorBone m_FirstBone;
+		public JellyComponent m_Jelly;
 
 		public ActorBone FirstBone
 		{

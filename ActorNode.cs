@@ -19,7 +19,7 @@ namespace Nima
 		protected float m_RenderOpacity = 1.0f;
 
 		private bool m_OverrideWorldTransform = false;
-		private bool m_IsCollapsedVisibility = false;
+		protected bool m_IsCollapsedVisibility = false;
 
 		private bool m_RenderCollapsed = false;
 
@@ -109,6 +109,19 @@ namespace Nima
 					return;
 				}
 				m_Translation[1] = value;
+				MarkTransformDirty();
+			}
+		}
+
+		public Vec2D Translation
+		{
+			get 
+			{
+				return new Vec2D(m_Translation);
+			}
+			set
+			{
+				Vec2D.Copy(m_Translation, value);
 				MarkTransformDirty();
 			}
 		}

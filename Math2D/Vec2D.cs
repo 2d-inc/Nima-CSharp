@@ -44,6 +44,11 @@ namespace Nima.Math2D
 			m_Buffer[1] = copy.m_Buffer[1];
 		}
 
+		static public void Copy(Vec2D o, Vec2D a)
+		{
+			o[0] = a[0];
+			o[1] = a[1];
+		}
 
 		public static Vec2D TransformMat2D(Vec2D o, Vec2D a, Mat2D m) 
 		{
@@ -70,11 +75,38 @@ namespace Nima.Math2D
 	    	return o;
 		}
 
+		public static Vec2D Add(Vec2D o, Vec2D a, Vec2D b) 
+		{
+	    	o[0] = a[0] + b[0];
+	    	o[1] = a[1] + b[1];
+	    	return o;
+		}
+
+		public static Vec2D Scale(Vec2D o, Vec2D a, float scale) 
+		{
+	    	o[0] = a[0] + scale;
+	    	o[1] = a[1] + scale;
+	    	return o;
+		}
+
 		public static float Length(Vec2D a) 
 		{
 	    	float x = a[0];
 	        float y = a[1];
 	    	return (float)Math.Sqrt(x*x + y*y);
+		}
+
+		public static float Distance(Vec2D a, Vec2D b) 
+		{
+	    	float x = b[0] - a[0];
+	        float y = b[1] - a[1];
+	    	return (float)Math.Sqrt(x*x + y*y);
+		}
+
+		public static void Negate(Vec2D a, Vec2D b) 
+		{
+	    	a[0] = -b[0];
+			a[1] = -b[1];
 		}
 
 		public static void Normalize(Vec2D result, Vec2D a)

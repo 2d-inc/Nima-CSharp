@@ -75,10 +75,6 @@ namespace Nima
 
 		public bool AddDependency(ActorComponent a, ActorComponent b)
 		{
-			if(a == null || b== null)
-			{
-				Console.WriteLine("WTF");
-			}
 			IList<ActorComponent> dependents = b.m_Dependents;
 			if(dependents == null)
 			{
@@ -393,6 +389,7 @@ namespace Nima
 							break;
 
 						case BlockTypes.JellyComponent:
+							component = JellyComponent.Read(this, nodeBlock);
 							break;
 
 						case BlockTypes.ActorIKConstraint:
