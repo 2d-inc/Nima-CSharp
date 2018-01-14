@@ -399,6 +399,22 @@ namespace Nima
 						case BlockTypes.ActorDistanceConstraint:
 							component = ActorDistanceConstraint.Read(this, nodeBlock);
 							break;
+
+						case BlockTypes.ActorTranslationConstraint:
+							component = ActorTranslationConstraint.Read(this, nodeBlock);
+							break;
+
+						case BlockTypes.ActorScaleConstraint:
+							component = ActorScaleConstraint.Read(this, nodeBlock);
+							break;
+
+						case BlockTypes.ActorRotationConstraint:
+							component = ActorRotationConstraint.Read(this, nodeBlock);
+							break;
+
+						case BlockTypes.ActorTransformConstraint:
+							component = ActorTransformConstraint.Read(this, nodeBlock);
+							break;
 					}
 				}
 				if(component is ActorNode)

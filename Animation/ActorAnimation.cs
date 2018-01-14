@@ -75,8 +75,8 @@ namespace Nima.Animation
 					case PropertyTypes.VertexDeform:
 						keyFrameReader = KeyFrameVertexDeform.Read;
 						break;
-					case PropertyTypes.IKStrength:
-						keyFrameReader = KeyFrameIKStrength.Read;
+					case PropertyTypes.ConstraintStrength:
+						keyFrameReader = KeyFrameConstraintStrength.Read;
 						break;
 					case PropertyTypes.Trigger:
 						keyFrameReader = KeyFrameTrigger.Read;

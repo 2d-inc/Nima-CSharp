@@ -519,11 +519,11 @@ namespace Nima.Animation
 		}
 	}
 
-	public class KeyFrameIKStrength : KeyFrameNumeric
+	public class KeyFrameConstraintStrength : KeyFrameNumeric
 	{
 		public static KeyFrame Read(BinaryReader reader, ActorComponent component)
 		{
-			KeyFrameIKStrength frame = new KeyFrameIKStrength();
+			KeyFrameConstraintStrength frame = new KeyFrameConstraintStrength();
 			if(KeyFrameNumeric.Read(reader, frame))
 			{
 				return frame;
@@ -533,12 +533,17 @@ namespace Nima.Animation
 
 		protected override void SetValue(ActorComponent component, float value, float mix)
 		{
-			ActorIKTarget target = component as ActorIKTarget;
-			if(target == null)
+			ActorConstraint constraint = component as ActorConstraint;
+			if(constraint != null)
 			{
+				constraint.Strength = constraint.Strength * (1.0f - mix) + value * mix;
 				return;
 			}
-			target.Strength = target.Strength * (1.0f - mix) + value * mix;
+			ActorIKTarget target = component as ActorIKTarget;
+			if(target != null)
+			{
+				target.Strength = target.Strength * (1.0f - mix) + value * mix;
+			}
 		}
 	}
 
