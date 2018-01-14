@@ -187,7 +187,7 @@ namespace Nima
 			{
 				component = new ActorIKConstraint();
 			}
-			ActorConstraint.Read(actor, reader, component);
+			ActorTargetedConstraint.Read(actor, reader, component);
 
 			component.m_InvertDirection = reader.ReadByte() == 1;
 			

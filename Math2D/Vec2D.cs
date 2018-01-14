@@ -84,9 +84,18 @@ namespace Nima.Math2D
 
 		public static Vec2D Scale(Vec2D o, Vec2D a, float scale) 
 		{
-	    	o[0] = a[0] + scale;
-	    	o[1] = a[1] + scale;
+	    	o[0] = a[0] * scale;
+	    	o[1] = a[1] * scale;
 	    	return o;
+		}
+
+		public static Vec2D Lerp(Vec2D o, Vec2D a, Vec2D b, float f)
+		{
+			float ax = a[0];
+			float ay = a[1];
+			o[0] = ax + f * (b[0] - ax);
+    		o[1] = ay + f * (b[1] - ay);
+			return o;
 		}
 
 		public static float Length(Vec2D a) 
