@@ -84,7 +84,7 @@ namespace Nima.Animation
 			return null;
 		}
 
-		const double m_Epsilon = 1e-8;
+		const double m_Epsilon = Double.Epsilon;
 		double m_X0;
 		double m_Y0;
 
