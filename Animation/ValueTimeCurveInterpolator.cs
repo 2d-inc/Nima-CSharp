@@ -86,16 +86,9 @@ namespace Nima.Animation
 
 		const double m_Epsilon = Double.Epsilon;
 		double m_X0;
-		double m_Y0;
-
 		double m_X1;
-		double m_Y1;
-
 		double m_X2;
-		double m_Y2;
-
 		double m_X3;
-		double m_Y3;
 
 		double m_E;
 		double m_F;
@@ -105,16 +98,9 @@ namespace Nima.Animation
 		private void InitializeCurve(double x0, double y0, double x1, double y1, double x2, double y2, double x3, double y3)
 		{
 			m_X0 = x0;
-			m_Y0 = y0;
-
 			m_X1 = x1;
-			m_Y1 = y1;
-
 			m_X2 = x2;
-			m_Y2 = y2;
-
 			m_X3 = x3;
-			m_Y3 = y3;
 
 			m_E = y3 - 3.0 * y2 + 3.0 * y1 - y0;
 			m_F = 3.0 * y2 - 6.0 * y1 + 3.0 * y0;
