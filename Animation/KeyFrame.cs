@@ -597,6 +597,8 @@ namespace Nima.Animation
 					actorImage.DrawOrder = doi.order;
 				}
 			}
+
+			actor.MarkImageDrawOrderDirty();			
 		}
 	}
 
